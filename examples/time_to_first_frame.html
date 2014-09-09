@@ -26,17 +26,17 @@ found in the LICENSE file.
 
       function appendButtonClick() {
 
-        var now = window.performance.now();
-
         if(!smoothnessDataCollector_) {
           smoothnessDataCollector_ = new SmoothnessDataCollector();
         }
-        smoothnessDataCollector_.enabled = true;
         smoothnessDataCollector_.requestFirstFramePromise().then(function(result) {
-          var raf = document.querySelector('#rafTime');
-          var smoothness =  document.querySelector('#smoothnessTime');
-          raf.innerText = "RAF Time to first frame: " + (result.rafTime-now);
-          smoothness.innerText = "Smoothness Time to first frame: " + (result.smoothnessTime-now);
+          if (smoothnessDataCollector_.supportsSmoothnessEvents) {
+            var smoothness =  document.querySelector('#smoothnessTime');
+            smoothness.innerText = "Smoothness Time to first frame: " + result;
+          } else {
+            var raf = document.querySelector('#rafTime');
+            raf.innerText = "RAF Time to first frame: " + result;
+          }
         }, function(error){
           console.log("Error getting time to first frame: " + error);
         });

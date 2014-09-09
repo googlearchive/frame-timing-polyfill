@@ -404,7 +404,7 @@
       }
     },
 
-    get supportsDrawEvents() {
+    get supportsSmoothnessEvents() {
       return this.hasSmoothnessApi_;
     },
 
@@ -559,116 +559,86 @@
     },
 
     /* Returns promise that, when resolved, will tell time of the draw of the
-     * first frame, as measured by requestAnimationFrame and smoothness if present.
+     * first frame, as measured by requestAnimationFrame or smoothness if
+     * present.
      * E.g.:
      *   element.addEventListener('click', function() {
-     *      clickTime = window.performance.now();
-     *     montior.requestFirstFramePromise().then(function(times) {
-     *       console.log("TTFS: ", times.rafTime - clickTime);
+     *     montior.requestFirstFramePromise().then(function(elapsedTime) {
+     *       console.log("TTFS: ", elapsedTime);
      *     })
      *   });
-     *
-     *
-     * returns an object { rafTime : 1234,
-     *                     smoothnessTime: 4567 }
-     *
-     * rafTime is only a guess as to when the screen was updated,
-     * smoothnessTime is accurate.
      *
      * Note: this promise really can fail. When the page goes invisible,
      * for instance.
      */
     requestFirstFramePromise: function() {
-      var promises = [];
-      var rafPromiseIndex;
-      var smoothnessPromiseIndex;
+      return this.hasSmoothnessApi_ ?
+          this.requestFirstFramePromiseUsingSmoothness_() :
+          this.requestFirstFramePromiseUsingRAF_();
+    },
 
-      if (!this.rafCommitMonitor_)
-        this.rafCommitMonitor_ = new RAFBasedCommitMonitor();
+    requestFirstFramePromiseUsingRAF_: function () {
+      return new Promise(function(resolve, reject) {
+        var startTime = this.window_.performance.now();
 
-      var rafPromise = new Promise(function(resolve, reject) {
-        var previousRafMonitorState = this.rafCommitMonitor_.enabled;
-        this.rafCommitMonitor_.enabled = true;
-        var rafCallback;
         var cancelRafPromise = function() {
           this.removeEventListener('cancel-promises', cancelRafPromise);
-          this.rafCommitMonitor_.removeEventListener('called', rafCallback);
-          this.rafCommitMonitor_.enabled = previousRafMonitorState;
           reject(new Error("Page visibility changed"));
         }.bind(this);
         this.addEventListener('cancel-promises', cancelRafPromise);
 
-        rafCallback = function() {
-          this.removeEventListener('cancel-promises', cancelRafPromise);
-          this.rafCommitMonitor_.removeEventListener('called', rafCallback);
-          this.rafCommitMonitor_.enabled = previousRafMonitorState;
-          resolve(this.window_.performance.now());
-        }.bind(this);
-        this.rafCommitMonitor_.addEventListener('called', rafCallback);
-      }.bind(this));
-
-      if (this.hasSmoothnessApi_) {
-        var smoothnessPromise = new Promise(function(resolve, reject) {
-          var previousEnabledState = this.enabled;
-          var targetCommitEvent;
-          var now = this.window_.performance.now();
-          var smoothnessCallback;
-          this.enabled = true;
-
-          var cancelSmoothnessPromise = function() {
-            this.removeEventListener('cancel-promises', cancelSmoothnessPromise);
-            this.removeEventListener('got-data', smoothnessCallback);
-            this.enabled = previousEnabledState;
-            reject(new Error("Page visibility changed"));
-          }.bind(this);
-          this.addEventListener('cancel-promises', cancelSmoothnessPromise);
-
-          smoothnessCallback = function() {
-            if (!targetCommitEvent) {
-              for(var i = 0; i < this.compositorCommitEvents_.length; ++i) {
-                if (this.compositorCommitEvents_[i].startTime > now) {
-                  targetCommitEvent = this.compositorCommitEvents_[i];
-                  break;
-                }
-              }
-            }
-            if (!targetCommitEvent) {
-              return;
-            }
-            var targetFrame = targetCommitEvent.sourceFrame;
-            for (var j = 0; j < this.compositorDrawEvents_.length; ++j) {
-              if (this.compositorDrawEvents_[j].sourceFrame >= targetFrame) {
-                this.removeEventListener('cancel-promises',
-                                         cancelSmoothnessPromise);
-                this.removeEventListener('got-data', smoothnessCallback);
-                this.enabled = previousEnabledState;
-                resolve(this.compositorDrawEvents_[j].startTime);
-              }
-            }
-          }.bind(this);
-
-          this.addEventListener('got-data', smoothnessCallback);
-          this.renewQuiescenceTimeout_();
+        this.window_.requestAnimationFrame(function() {
+          this.window_.requestAnimationFrame(function() {
+            this.removeEventListener('cancel-promises', cancelRafPromise);
+            resolve(this.window_.performance.now() - startTime);
+          }.bind(this));
         }.bind(this));
-      }
+      }.bind(this));
+    },
 
+    requestFirstFramePromiseUsingSmoothness_: function () {
+      return new Promise(function(resolve, reject) {
+        var previousEnabledState = this.enabled;
+        var targetCommitEvent;
+        var startTime = this.window_.performance.now();
+        var smoothnessCallback;
+        this.enabled = true;
 
-      rafPromiseIndex = promises.length;
-      promises.push(rafPromise);
-      if (smoothnessPromise) {
-        smoothnessPromiseIndex = promises.length;
-        promises.push(smoothnessPromise);
-      }
-      return Promise.all(promises).then(function(results) {
-        var result = {};
-        if (rafPromiseIndex !== undefined) {
-          result.rafTime = results[rafPromiseIndex];
-        }
-        if (smoothnessPromiseIndex !== undefined ) {
-          result.smoothnessTime = results[smoothnessPromiseIndex];
-        }
-        return result;
-      });
+        var cancelSmoothnessPromise = function() {
+          this.removeEventListener('cancel-promises', cancelSmoothnessPromise);
+          this.removeEventListener('got-data', smoothnessCallback);
+          this.enabled = previousEnabledState;
+          reject(new Error("Page visibility changed"));
+        }.bind(this);
+        this.addEventListener('cancel-promises', cancelSmoothnessPromise);
+
+        smoothnessCallback = function() {
+          if (!targetCommitEvent) {
+            for(var i = 0; i < this.compositorCommitEvents_.length; ++i) {
+              if (this.compositorCommitEvents_[i].startTime > startTime) {
+                targetCommitEvent = this.compositorCommitEvents_[i];
+                break;
+              }
+            }
+          }
+          if (!targetCommitEvent) {
+            return;
+          }
+          var targetFrame = targetCommitEvent.sourceFrame;
+          for (var j = 0; j < this.compositorDrawEvents_.length; ++j) {
+            if (this.compositorDrawEvents_[j].sourceFrame >= targetFrame) {
+              this.removeEventListener('cancel-promises',
+                                       cancelSmoothnessPromise);
+              this.removeEventListener('got-data', smoothnessCallback);
+              this.enabled = previousEnabledState;
+              resolve(this.compositorDrawEvents_[j].startTime - startTime);
+            }
+          }
+        }.bind(this);
+
+        this.addEventListener('got-data', smoothnessCallback);
+        this.renewQuiescenceTimeout_();
+      }.bind(this));
     }
   };
 
