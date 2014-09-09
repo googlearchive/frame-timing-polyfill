@@ -5,7 +5,7 @@
 
 document.addEventListener('run-tests', function(runner) {
   runner.test('rbcm-basic', function() {
-    var monitor = new RAFBasedCommitMonitor(window);
+    var monitor = new RAFBasedDataCollector(window);
     monitor.enabled = true;
 
     function cleanup() {

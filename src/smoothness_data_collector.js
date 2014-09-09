@@ -60,7 +60,7 @@
    *
    * @constructor
    */
-  function RAFBasedCommitMonitor(window, opt_bufferSize) {
+  function RAFBasedDataCollector(window, opt_bufferSize) {
     this.maxBufferSize_ = opt_bufferSize || 60;
 
     this.listeners_ = {'full' : [],
@@ -73,7 +73,7 @@
     this.setImmediate_ = createSetImmediateFunction(this.window_);
   }
 
-  RAFBasedCommitMonitor.prototype = {
+  RAFBasedDataCollector.prototype = {
     get enabled() {
       return this.enabled_;
     },
@@ -321,7 +321,7 @@
     this.hasSmoothnessApi_ = this.window_.PerformanceSmoothnessTiming !== undefined;
 
     if (!this.hasSmoothnessApi_) {
-      this.rafCommitMonitor_ = new RAFBasedCommitMonitor(this.window_);
+      this.rafCommitMonitor_ = new RAFBasedDataCollector(this.window_);
       this.rafCommitMonitor_.addEventListener('full', this.onRafBufferFull_);
     } else {
       this.rafCommitMonitor_ = undefined;
@@ -719,7 +719,7 @@
     }
   };
 
-  window.RAFBasedCommitMonitor = RAFBasedCommitMonitor;
+  window.RAFBasedDataCollector = RAFBasedDataCollector;
   window.SmoothnessDataCollector = SmoothnessDataCollector;
   window.SmoothnessMonitor = SmoothnessMonitor;
 })();

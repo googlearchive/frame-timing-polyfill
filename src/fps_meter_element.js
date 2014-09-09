@@ -235,7 +235,7 @@
     }
   };
 
-  window.RAFBasedCommitMonitor = RAFBasedCommitMonitor;
+  window.RAFBasedDataCollector = RAFBasedDataCollector;
   window.SmoothnessDataCollector = SmoothnessDataCollector;
   window.FPSMeter = FPSMeter;
 })();
