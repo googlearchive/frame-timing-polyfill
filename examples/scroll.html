@@ -55,18 +55,21 @@ found in the LICENSE file.
     }
 
     function gotData(data) {
-      if(!data) return;
+      if(!data || data.measuredTimeRange === -Infinity) return;
       ignoreMonitorPaint = true;
       console.log("gotData",data);
-      var raf = data.rafIntervalMs;
-      raf = raf ? 1000 / raf : 0;
-      var cpsf = data.drawsPerCommit;
-      var fps = data.drawIntervalMs;
-      fps = fps ? 1000 / fps : 0;
       document.querySelector('#durationValue').innerText = data.measuredTimeRange.toFixed(2);
-      document.querySelector('#rafValue').innerText = raf.toFixed(2);
-      document.querySelector('#fpsValue').innerText = fps.toFixed(2);
-      document.querySelector('#cpsfValue').innerText = cpsf.toFixed(2);
+      if (monitor.supportsSmoothnessEvents) {
+        var cpsf = data.drawsPerCommit;
+        var fps = data.drawIntervalMs;
+        fps = fps ? 1000 / fps : 0;
+        document.querySelector('#fpsValue').innerText = fps.toFixed(2);
+        document.querySelector('#cpsfValue').innerText = cpsf.toFixed(2);
+      } else {
+        var raf = data.rafIntervalMs;
+        raf = raf ? 1000 / raf : 0;
+        document.querySelector('#rafValue').innerText = raf.toFixed(2);
+      }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -81,6 +84,15 @@ found in the LICENSE file.
          * - stop monitor get data
          * update div with computd fps for scroll
          */
+        if (monitor.supportsSmoothnessEvents) {
+          document.querySelector('#raf').style.display = 'none';
+          document.querySelector('#fps').style.display = 'initial';
+          document.querySelector('#cpsf').style.display = 'initial';
+        } else {
+          document.querySelector('#raf').style.display = 'initial';
+          document.querySelector('#fps').style.display = 'none';
+          document.querySelector('#cpsf').style.display = 'none';
+        }
       }
     });
     </script>
@@ -132,11 +144,11 @@ found in the LICENSE file.
 <div id="smoothness-info">
   <div style="position:static;padding:4px;line-height:120%">
     <span>Duration: </span><span id="durationValue"></span><br/>
-    <span title='requestAnimationFrames per second'>RAF: </span>
-    <span id="rafValue"></span><br/>
-    <span title='Frames drawn per second'>FPS: </span>
+    <span title='requestAnimationFrames per second' id="raf">RAF: </span>
+    <span id="rafValue"></span>
+    <span title='Frames drawn per second' id="fps">FPS: </span>
     <span id="fpsValue"></span><br/>
-    <span title='Composites per source frame'>CPSF: </span>
+    <span title='Composites per source frame' id="cpsf">CPSF: </span>
     <span id="cpsfValue"></span>
   </div>
 </div>

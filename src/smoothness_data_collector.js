@@ -287,7 +287,7 @@
       var frames = this.computeCurrentFramesFromCurrentData_();
       if (frames.length) {
         frames.forEach(function(f) {
-          numDraws += f.drawEvents_.length;
+          numDraws += f.drawEvents.length;
         });
         this.drawsPerCommit = numDraws / frames.length;
       }
@@ -677,7 +677,7 @@
         if (stats)
           this.currentSmoothnessInfo_.addMoreInfo(stats);
       }
-      return currentSmoothnessInfo_;
+      return this.currentSmoothnessInfo_;
     },
 
     dataHandler_: function() {
