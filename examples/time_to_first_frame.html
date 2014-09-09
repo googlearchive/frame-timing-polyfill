@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2014 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<head>
+    <title>A time-to-frame page</title>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0,initial-scale=1.0, user-scalable=yes">
+
+    <!-- fps meter snippet -->
+    <script src="../src/smoothness_data_collector.js"></script>
+    <link rel="stylesheet" href="../src/fps_meter_element.css">
+
+    <!-- actual page contents follow -->
+    <script>
+
+      var smoothnessDataCollector_;
+      var firstFramePromise_;
+
+      function animateToggled() {
+        var el = document.querySelector("img");
+        var rotating = document.querySelector('#animate').checked
+        el.style.webkitAnimationName = rotating ? "rotate" : "";
+      };
+
+      function appendButtonClick() {
+
+        var now = window.performance.now();
+
+        if(!smoothnessDataCollector_) {
+          smoothnessDataCollector_ = new SmoothnessDataCollector();
+        }
+        smoothnessDataCollector_.enabled = true;
+        smoothnessDataCollector_.requestFirstFramePromise().then(function(result) {
+          var raf = document.querySelector('#rafTime');
+          var smoothness =  document.querySelector('#smoothnessTime');
+          raf.innerText = "RAF Time to first frame: " + (result.rafTime-now);
+          smoothness.innerText = "Smoothness Time to first frame: " + (result.smoothnessTime-now);
+        }, function(error){
+          console.log("Error getting time to first frame: " + error);
+        });
+        appendDivs();
+      }
+
+      function appendDivs() {
+        var cols = 8;
+        var s = 256;
+        var target = document.getElementById("scrollable");
+        for (var i = 0; i < 1000; ++i) {
+          var div = document.createElement('div');
+          div.innerHTML = "<p>Item #"+i+"</p>";
+          for (var j = 0; j < 9; j++) {
+            var el = document.createElement('img');
+            el.className = 'shaded';
+            el.src = "images/soccerball.png";
+            el.basicLeft = (i % cols) * s;
+            el.style.top = (Math.floor(i / cols) * s) + 'px';
+            div.appendChild(el);
+          }
+          target.appendChild(div);
+        }
+      }
+
+
+    </script>
+    <style type="text/css">
+      #scrollable {
+          position: relative;
+          border: 1px solid red;
+          overflow-y: scroll;
+          overflow-x: hidden;
+      }
+      .shaded {
+          width: 256px;
+          height: 256px;
+          background: white;
+          box-shadow: 15px 15px 15px;
+          border-radius: 60px;
+      }
+      #rotating-image {
+        -webkit-animation-duration: 10s;
+        -webkit-animation-timing-function: linear;
+        -webkit-animation-iteration-count: infinite;
+      }
+
+      @-webkit-keyframes rotate {
+        from {
+          -webkit-transform: rotate(0deg);
+        }
+        to {
+          -webkit-transform: rotate(360deg);
+        }
+      }
+    </style>
+</head>
+<body>
+  <div style="float: left; margin: 0 1em 1em 0; width: 150px;">
+    <img id="rotating-image" src="images/soccerball.png" width="150px" height="150px">
+    <label>
+      <input id="animate" type="checkbox" onclick="animateToggled()">Animate</input>
+    </label>
+  </div>
+
+  This example discusses the issues in computing how quickly the user sees a visual response to their finger tap, click or keyboard press.</p>
+
+  The platform already delivers events for these events, and there are even
+  discussions of putting the <a href="https://code.google.com/p/chromium/issues/detail?id=160524">hardware-level timestamp on them</a>.
+  </p>
+
+  However, that isn't enough to compute actual repsonse time. For that, we
+  need to know when the actual visual effects of that input are onscreen.
+  In older browsers that update the screen on the main javascript thread right after requestAnimationFrame, you can timestamp right after rAF using a
+  setTimeout(, 0) and guess the time. However, most browsers these days run
+  the painting and compositing steps on another thread after rAF. This time
+  is invisible to the platform, so it is difficult to guess the on-screen
+  time.</p>
+
+  In some browsers, a second rAF cannot begin until the first is put
+  onscreen. However, this is just an implementation accident and at any moment
+  browsers could switch to allowing N rAFs to be queued. Chrome for instance
+  has prototyped this <a href="https://docs.google.com/a/chromium.org/document/d/1VJf2busac85FRQYXhn8hdc-x4yp77JUroTrY-_sj5Ck/edit?pli=1#">before</a>.</p>
+
+  Furhter complicating this, the page may contain accelerated animations. In
+  browsers that run CSS animation on a second compositor thread, it is not enough to know when the compositor thread draws, since it may be
+  drawing the CSS animation for your old page, not showing the new frame. To really get the right answer, you need to know precisely <b>which</b> frame
+  the compositor is drawing.</p>
+
+  <button id="append-button" onclick="appendButtonClick();" style="font-size:250%">Do something responsively!</button>
+  </p>
+  <p id="rafTime"/>
+  <p id="smoothnessTime"/>
+
+  <div id="scrollable">
+  </div>
+</body>

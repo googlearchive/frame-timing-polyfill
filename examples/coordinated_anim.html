@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2014 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<html>
+  <head>
+    <title>A coordinated animation</title>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0,initial-scale=1.0, user-scalable=yes">
+
+    <!-- fps meter snippet -->
+    <script src="../src/smoothness_data_collector.js"></script>
+    <script src="../src/fps_meter_element.js"></script>
+    <link rel="stylesheet" href="../src/fps_meter_element.css">
+    <script>
+      FPSMeter.initWhenReady();
+    </script>
+
+    <!-- actual page contents follow -->
+    <style>
+      demos {
+        display: flex;
+        flex-direction: row;
+        flex-flow: row wrap
+      }
+      #checkbox-area {
+        font-family: 'Open Sans', Arial, sans-serif;
+        font-size: 18pt;
+        color: #797979;
+      }
+      input {
+        font-size: 130%;
+      }
+      label {
+        -webkit-user-select: none;
+      }
+      #cssimage {
+        -webkit-animation-duration: 6s;
+        -webkit-animation-timing-function: linear;
+        -webkit-animation-iteration-count: infinite;
+        -webkit-animation-name: rotate;
+      }
+      #rafimage {
+        will-change: transform;
+        transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+      }
+
+      @-webkit-keyframes rotate {
+        from {
+          -webkit-transform: rotate(0deg);
+        }
+        to {
+          -webkit-transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <demos>
+      <img id="cssimage" src="images/soccerball.png" width="250px" height="250px">
+      <img id="rafimage" src="images/soccerball.png" width="250px" height="250px">
+      <div id="checkbox-area">
+        <div style="width: 500px">
+          <label>
+            <input id="jank" type="checkbox" onclick="didJankStateChange()">Jank</input>
+          </label>
+          <label>
+            <input id="rafanimate" type="checkbox" checked="true" onclick="didRAFAnimationStateChange()">RAF Animate</input>
+          </label>
+        </div>
+      </div>
+    </demos>
+    <div style="margin-top: 50px">
+      The goal of this page is to show two animation strategies, and monitor
+      the smoothness of each. One is a continuously looping <b>CSS</b>
+      animation of the transform property. The other is a requestAnimationFrame
+      loop which updates the transform property.
+      </p>
+
+      The jank checkbox introduces random jank via javascript. On browsers that
+      execute CSS animations on another thread, the jank will affect the
+      responsiveness of javascript but the CSS animation should appear visually
+      smooth. The requestAnimationFrame animation will start to lag behing. A
+      good FPS monitoring API should be able to show this happening.
+      </p>
+    </div>
+    <script>
+      var deg = 0;
+      var rafAnimatePending = false;
+      function didRAFAnimationStateChange() {
+        if (rafAnimatePending)
+          return;
+        rafAnimatePending = true;
+        window.requestAnimationFrame(rafAnimate);
+      }
+      function rafAnimate() {
+        rafAnimatePending = false;
+        var enableEl = document.querySelector('#rafanimate');
+        if (!enableEl.checked)
+          return;
+
+        var el = document.querySelector('#rafimage');
+        deg = deg + 1 % 360;
+        el.style.transform = "rotate("+deg+"deg)"
+
+        window.requestAnimationFrame(rafAnimate);
+      };
+      window.addEventListener('DOMContentLoaded', function() {
+        didRAFAnimationStateChange();
+      });
+
+      function sleep(ms) {
+        var start = Date.now();
+        while(Date.now() < start + ms);
+      }
+
+      maybeJankPending = false;
+      function didJankStateChange() {
+        if (maybeJankPending)
+          return;
+        setTimeout(maybeJank, 0);
+        maybeJankPending = true;
+      }
+      function maybeJank() {
+        maybeJankPending = false;
+        if (!document.querySelector('#jank').checked){
+          return;
+        }
+        console.time('jank');
+        sleep(4+Math.random() * 60);
+        console.timeEnd('jank');
+        setTimeout(maybeJank, Math.random(4));
+      };
+      didJankStateChange();
+    </script>
+  </body>
+</html>

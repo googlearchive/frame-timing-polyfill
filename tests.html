@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2014 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<html>
+  <head>
+    <script src="src/mock_window.js"></script>
+    <script src="src/smoothness_data_collector.js"></script>
+    <script src="src/smoothness_data_collector_test.js"></script>
+    <script src="src/fps_meter_element.js"></script>
+    <script src="src/fps_meter_element_test.js"></script>
+
+    <!-- Simple-as-@#) test runner follows. Where you want a test do this:
+
+    document.addEventListener('run-tests', function(runner) {
+    });
+
+    Runner has test method of form:
+      runner.test('test1', function() {
+      });
+
+    Very basic assertions are available as globals, see below.
+
+    -->
+    <style>
+      test-results {
+        display: block;
+      }
+      test-results > test-result {
+        font-family: monospace;
+        font-weight: bold;
+        display: block;
+      }
+      test-results > test-result > title {
+        display: block;
+      }
+      test-results > test-result > stack-trace {
+        font-weight: normal;
+        white-space: pre;
+        margin-bottom: 2em;
+        padding-left: 1em;
+        display: block;
+      }
+    </style>
+    <script>
+    function assertEquals(a, b) {
+      if (a === b)
+        return;
+      throw new Error('Failure');
+    }
+
+    function assertTrue(a) {
+      if (a)
+        return;
+      throw new Error('Failure');
+    }
+
+    window.addEventListener('load', function() {
+      var tests = [];
+
+      var e = new Event('run-tests');
+      e.test = function(name, cb) {
+        tests.push({name: name, cb: cb});
+      };
+      document.dispatchEvent(e);
+
+      runTests(tests);
+    });
+
+    function runTests(tests) {
+      var resultsEl = document.querySelector('test-results');
+      resultsEl.textContent = '';
+
+      function runOneTest(resolve) {
+        test = tests[0];
+        tests.splice(0,1);
+
+        var resultEl = document.createElement('test-result');
+        resultsEl.appendChild(resultEl);
+
+        resultEl.textContent = test.name + ': RUNNING';
+        var status;
+        try {
+          res = test.cb();
+        } catch(e) {
+          didFail(e);
+          resolve();
+          return;
+        }
+
+        if (res && res.then) {
+          res.then(
+            function() {
+              didPass();
+              resolve();
+            },
+            function(e) {
+              didFail(e);
+              resolve();
+            });
+        } else {
+          didPass();
+        }
+
+        function didPass() {
+          status = 'PASSED';
+          resultEl.textContent = test.name + ': PASSED';
+        }
+        function didFail(e) {
+          resultEl.textContent = '';
+          var titleEl = document.createElement('title');
+          titleEl.textContent = test.name + ': FAILED';
+          resultEl.appendChild(titleEl);
+
+          var failEl = document.createElement('stack-trace');
+          failEl.textContent = e.stack ? e.stack : e;
+          resultEl.appendChild(failEl);
+        }
+      }
+      function maybeRunOneMore() {
+        if (tests.length == 0)
+          return;
+        setTimeout(function() {
+          runOneTest(maybeRunOneMore);
+        }, 0);
+      }
+      runOneTest(maybeRunOneMore);
+    }
+    </script>
+  </head>
+  <body>
+    <test-results>
+    </test-results>
+  </body>
+</html>

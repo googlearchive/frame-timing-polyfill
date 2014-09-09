@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2014 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<html>
+  <head>
+    <title>Idle rAF Loop Experiment</title>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0,initial-scale=1.0, user-scalable=yes">
+
+    <style>
+      #rotating-div {
+        -webkit-animation-duration: 10s;
+        -webkit-animation-timing-function: linear;
+        -webkit-animation-iteration-count: infinite;
+      }
+
+      @-webkit-keyframes rotate {
+        from {
+          -webkit-transform: rotate(0deg);
+        }
+        to {
+          -webkit-transform: rotate(360deg);
+        }
+      }
+
+      #results {
+        margin: 10px;
+        width: 600px;
+        height: 200px;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body >
+    <div>
+      <img id="rotating-div" src="../examples/images/soccerball.png" width="250">
+    </div>
+    <div>
+      <label>
+            <input id="include-css-animation" type="checkbox" onclick="updateAnimation()">CSS Animation</input>
+      </label>
+      <label>
+            <input id="use-set-immediate" type="checkbox" checked>Use setImmediate</input>
+      </label>
+
+    </div>
+    Results:</p>
+    <canvas id="results"></canvas>
+    <script>
+  var setImmediate;
+  if (window.setImmediate)
+    setImmediate = setImmediate;
+  else {
+    setImmediate = (function() {
+      if (window.setImmediate)
+        return;
+
+      var queue = [];
+      window.addEventListener('message', onMessage);
+      function onMessage(e) {
+        if (e.data.drainQueue === undefined)
+          return;
+
+        var toRun = queue.slice()
+        queue = [];
+        toRun.forEach(function(item) {
+          item[0].call(window, item[1], item[2], item[3], item[4]);
+        });
+      }
+      return function(cb, arg0, arg1, arg2, arg3) {
+        queue.push([cb, arg0, arg1, arg2, arg3]);
+        if (queue.length == 1)
+          window.postMessage({drainQueue: true}, '*');
+      };
+    })();
+  }
+  </script>
+    <script>
+      'use strict';
+
+      // Animation logic. This introduces the lightest possible load onto the
+      // main thread in hope that we the difference between the two is visible.
+      function updateAnimation() {
+        console.time('updateAnimation');
+        var el = document.querySelector("#rotating-div");
+        var rotating = document.querySelector('#include-css-animation').checked
+        el.style.webkitAnimationName = rotating ? "rotate" : "";
+        console.timeEnd('updateAnimation');
+      };
+      updateAnimation();
+
+      // This tracks the time between rAF and the main thread running tasks
+      // again. This is our best guess at how long the rAF plus rendering time
+      // aka "commit" takes.
+      var commitRecords = [];
+      function beginMeasureCommitTime(frameBeginTime) {
+        if (document.querySelector('#use-set-immediate').checked)
+          setImmediate(onCommitDone.bind(window, frameBeginTime));
+        else
+          setTimeout(onCommitDone.bind(window, frameBeginTime), 0);
+
+        requestAnimationFrame(beginMeasureCommitTime);
+      }
+
+      function onCommitDone(frameBeginTime) {
+        commitRecords.push({
+          frameBeginTime: frameBeginTime,
+          commitDoneTime: window.performance.now()
+        });
+        maybeUpdateResults(frameBeginTime);
+      }
+
+      requestAnimationFrame(beginMeasureCommitTime);
+
+      // This is just visualization code.
+      var lastUpdateTime;
+      function maybeUpdateResults(frameBeginTime) {
+        if (lastUpdateTime === undefined)
+          lastUpdateTime = frameBeginTime;
+        // Only update results div every 2 seconds.
+        if (frameBeginTime < lastUpdateTime + 2000)
+          return;
+        lastUpdateTime = frameBeginTime;
+
+        // Update canvas size
+        var results = document.querySelector('#results');
+        var resultsRect = results.getBoundingClientRect();
+        if (results.width !== resultsRect.width * window.devicePixelRatio)
+          results.width = resultsRect.width * window.devicePixelRatio;
+        if (results.height !== resultsRect.height * window.devicePixelRatio)
+          results.height = resultsRect.height * window.devicePixelRatio;
+
+        var w = results.width;
+        var h = results.height;
+        var ctx = results.getContext('2d');
+        ctx.clearRect(0, 0, w, h);
+
+        // Only include W records
+        commitRecords = commitRecords.slice(Math.max(0, commitRecords.length - w), w);
+
+        var maxH = 16;
+        ctx.fillStyle = 'black';
+        ctx.fillText(maxH + 'ms', w - 30, 12);
+
+        ctx.fillText('0ms', w - 30, h - 12);
+
+
+        ctx.strokeStyle = 'rgb(0,0,0)';
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.lineTo(0,h - 1);
+        ctx.lineTo(w - 1,h - 1);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgb(255,0,0)';
+        ctx.beginPath();
+        for (var i = 0; i < commitRecords.length; i++) {
+          var r = commitRecords[i];
+          var duration = r.commitDoneTime - r.frameBeginTime;
+          var y = h - (h * (duration / maxH));
+          if (i == 0)
+            ctx.moveTo(i, y);
+          else
+            ctx.lineTo(i, y);
+        }
+        ctx.stroke();
+      }
+    </script>
+  </body>
+</html>
