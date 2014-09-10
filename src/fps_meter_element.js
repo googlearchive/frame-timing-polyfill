@@ -169,33 +169,18 @@
       // TODO(nduca): Compute this from the actual stored frame data, instead of
       // once a second.
       var now = window.performance.now();
-      if (this.smoothnessDataCollector_.supportsDrawEvents) {
+      if (this.smoothnessDataCollector_.supportsSmoothnessEvents) {
         if (this.chartData_.length == 0)
           this.chartData_.push(['Date', 'FPS', 'CPSF']);
-        var last = undefined;
-        stats.compositeEvents.forEach(function(e) {
-          if(last === undefined) {
-            last = e.startTime;
-            return;
-          }
-          var et = e.startTime - last;
-          last = e.startTime;
-          et = et ? 1000 / et : 0;
-          this.chartData_.push([e.startTime, et, stats.drawsPerCommit]);
+        stats.frameIntervalsForRange.forEach(function(e) {
+          this.chartData_.push([e.time, (e.intervalMs? 1000/e.intervalMs : 0),
+                                stats.drawsPerCommit]);
         }.bind(this));
       } else {
         if (this.chartData_.length == 0)
           this.chartData_.push(['Date', 'FPS']);
-        var last = undefined;
-        stats.rafEvents.forEach(function(e) {
-          if(last === undefined) {
-            last = e.startTime;
-            return;
-          }
-          var et = e.startTime - last;
-          last = e.startTime;
-          et = et ? 1000 / et : 0;
-          this.chartData_.push([e.startTime, et]);
+        stats.frameIntervalsForRange.forEach(function(e) {
+          this.chartData_.push([e.time, (e.intervalMs? 1000/e.intervalMs : 0)]);
         }.bind(this));
       }
 

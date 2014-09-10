@@ -183,12 +183,16 @@
     this.drawIntervalMs = undefined;
     this.drawsPerCommit = undefined;
 
-    // The raw event stream for applications which require more precision.
+    // The high-precision stream for applications which require it.
+    this.frameIntervalsForRange = [];
+
+    //Private
+
+    // The raw event stream
     this.rafEvents_ = opt_rafEvents || [];
     this.commitEvents_ = opt_commitEvents || [];
     this.compositeEvents_ = opt_compositeEvents || [];
 
-    //Private
     this.calculate_();
   }
   SmoothnessInfoForRange.prototype = {
@@ -253,34 +257,56 @@
       return frames;
     },
 
-    calculate_:function() {
+    calculate_: function() {
       var bounds = this.getBounds_();
       this.measuredTimeRange = bounds.range;
-      // rafIntervalMs.
-      if (this.rafEvents_.length) {
-        this.rafIntervalMs = bounds.range / this.rafEvents_.length;
-      } else {
-        this.rafIntervalMs = 0;
-      }
-
-      if (!this.commitEvents_.length && !this.compositeEvents_.length) {
-        this.frameIntervalMs = this.rafIntervalMs;
+      if (bounds.range === -Infinity) {
         return;
       }
+      return this.rafEvents_.length ? this.calculateRaf_() :
+          this.calculateSmoothness_();
+    },
 
+    findIntervals_: function(v, i, a) {
+      if(this.last === undefined) {
+        this.last = v.startTime;
+        return;
+      }
+      var et = v.startTime - this.last;
+      this.last = v.startTime;
+      return {time: v.startTime, intervalMs: et};
+    },
+
+    calculateRaf_: function() {
+      // rafIntervalMs.
+      if (this.rafEvents_.length) {
+        this.rafIntervalMs = this.measuredTimeRange / this.rafEvents_.length;
+      }
+      this.frameIntervalsForRange = this.rafEvents_.map(
+          this.findIntervals_, {last: undefined});
+      this.frameIntervalsForRange.splice(0,1);
+      this.frameIntervalMs = this.rafIntervalMs;
+    },
+
+    calculateSmoothness_: function() {
       // commitIntervalMs.
       if (this.commitEvents_.length) {
-        this.commitIntervalMs = bounds.range / this.commitEvents_.length;
+        this.commitIntervalMs = this.measuredTimeRange /
+            this.commitEvents_.length;
       } else {
         this.commitIntervalMs = 0;
       }
 
       // drawIntervalMs.
       if (this.compositeEvents_.length) {
-        this.drawIntervalMs = bounds.range / this.compositeEvents_.length;
+        this.drawIntervalMs = this.measuredTimeRange /
+            this.compositeEvents_.length;
       } else {
         this.drawIntervalMs = 0;
       }
+      this.frameIntervalsForRange = this.compositeEvents_.map(
+          this.findIntervals_, {last: undefined});
+      this.frameIntervalsForRange.splice(0,1);
 
       // drawsPerCommit.
       var numDraws = 0;
