@@ -430,8 +430,7 @@
     },
 
     forceCollectEvents: function() {
-      var didGetEvents = this.handleEventTrigger_();
-      return didGetEvents ? this.overallSmoothnessInfo : undefined;
+      this.handleEventTrigger_();
     },
 
     onRafBufferFull_: function() {
@@ -673,9 +672,7 @@
      */
     get smoothnessInfo() {
       if (this.monitor_) {
-        var stats = this.monitor_.forceCollectEvents();
-        if (stats)
-          this.currentSmoothnessInfo_.addMoreInfo(stats);
+        this.monitor_.forceCollectEvents();
       }
       return this.currentSmoothnessInfo_;
     },
