@@ -188,7 +188,7 @@
     this.commitEvents_ = opt_commitEvents || [];
     this.compositeEvents_ = opt_compositeEvents || [];
 
-    //Privatei
+    //Private
     this.calculate_();
   }
   SmoothnessInfoForRange.prototype = {
@@ -719,4 +719,5 @@
   window.RAFBasedDataCollector = RAFBasedDataCollector;
   window.SmoothnessDataCollector = SmoothnessDataCollector;
   window.SmoothnessMonitor = SmoothnessMonitor;
+  window.SmoothnessInfoForRange = SmoothnessInfoForRange;
 })();
