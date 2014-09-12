@@ -14,7 +14,6 @@ found in the LICENSE file.
     <!-- actual page contents follow -->
     <script>
 
-      var smoothnessDataCollector_;
       var firstFramePromise_;
 
       function animateToggled() {
@@ -25,11 +24,8 @@ found in the LICENSE file.
 
       function appendButtonClick() {
 
-        if(!smoothnessDataCollector_) {
-          smoothnessDataCollector_ = new WebSmoothnessCollector();
-        }
-        smoothnessDataCollector_.requestFirstFramePromise().then(function(result) {
-          if (smoothnessDataCollector_.supportsSmoothnessEvents) {
+        web_smoothness.requestFirstFramePromise().then(function(result) {
+          if (web_smoothness.supportsSmoothnessEvents) {
             var smoothness =  document.querySelector('#smoothnessTime');
             smoothness.innerText = "Smoothness Time to first frame: " + result;
           } else {

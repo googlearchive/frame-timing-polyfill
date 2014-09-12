@@ -39,26 +39,23 @@ found in the LICENSE file.
       };
     </script>
     <script>
-    var monitor;
     var smoothnessMonitor;
     var ignoreMonitorPaint = false;
 
     function nonQuiesce() {
       if (!smoothnessMonitor && !ignoreMonitorPaint)
-        smoothnessMonitor = new WebSmoothnessMonitor(monitor, gotData);
+        smoothnessMonitor = new web_smoothness.Monitor(undefined, gotData);
       ignoreMonitorPaint = false;
     }
 
-    function didQuiesce() {
-      smoothnessMonitor = undefined;
-    }
-
     function gotData(data) {
-      if(!data || data.measuredTimeRange === -Infinity) return;
+      if (!data || data.measuredTimeRange === -Infinity) {
+        smoothnessMonitor = undefined;
+        return;
+      }
       ignoreMonitorPaint = true;
-      console.log("gotData",data);
       document.querySelector('#durationValue').innerText = data.measuredTimeRange.toFixed(2);
-      if (monitor.supportsSmoothnessEvents) {
+      if (web_smoothness.supportsSmoothnessEvents) {
         var cpsf = data.drawsPerCommit;
         var fps = data.drawIntervalMs;
         fps = fps ? 1000 / fps : 0;
@@ -69,21 +66,26 @@ found in the LICENSE file.
         raf = raf ? 1000 / raf : 0;
         document.querySelector('#rafValue').innerText = raf.toFixed(2);
       }
+      smoothnessMonitor = undefined;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
       if (window.location.search.indexOf('fps') !== -1) {
-        monitor = new WebSmoothnessCollector();
-        monitor.enabled = true;
-        monitor.addEventListener('got-data', nonQuiesce);
-        monitor.addEventListener('did-quiesce', didQuiesce);
+        web_smoothness.requestGotDataNotifications(nonQuiesce);
+        if(!web_smoothness.supportsSmoothnessEvents) {
+          window.setInterval(function() {
+            if(smoothnessMonitor)
+              smoothnessMonitor.end();
+          }, 500);
+        }
+
         /* TODO(mpb):
          *  - make monitor
          *  - listen quiesce event
          * - stop monitor get data
          * update div with computd fps for scroll
          */
-        if (monitor.supportsSmoothnessEvents) {
+        if (web_smoothness.supportsSmoothnessEvents) {
           document.querySelector('#raf').style.display = 'none';
           document.querySelector('#fps').style.display = 'initial';
           document.querySelector('#cpsf').style.display = 'initial';

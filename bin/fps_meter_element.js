@@ -681,7 +681,7 @@
    */
   function SmoothnessMonitor(opt_monitor, opt_dataCallback) {
     /* register with monitor for events */
-    this.monitor_ = monitor || SmoothnessDataCollector.getInstance();
+    this.monitor_ = opt_monitor || SmoothnessDataCollector.getInstance();
     this.dataCallback_ = opt_dataCallback;
 
     this.dataHandler_ = this.dataHandler_.bind(this);
