@@ -8,9 +8,8 @@ found in the LICENSE file.
     <title>A smooth scrolling page</title>
     <meta name="viewport" content="width=device-width, minimum-scale=1.0,initial-scale=1.0, user-scalable=yes">
 
-    <!-- fps meter snippet -->
-    <script src="../src/smoothness_data_collector.js"></script>
-    <link rel="stylesheet" href="../src/fps_meter_element.css">
+    <!-- web smoothness snippet -->
+    <script src="../bin/web_smoothness.js"></script>
 
     <!-- actual page contents follow -->
     <script>
@@ -46,7 +45,7 @@ found in the LICENSE file.
 
     function nonQuiesce() {
       if (!smoothnessMonitor && !ignoreMonitorPaint)
-        smoothnessMonitor = new SmoothnessMonitor(monitor, gotData);
+        smoothnessMonitor = new WebSmoothnessMonitor(monitor, gotData);
       ignoreMonitorPaint = false;
     }
 
@@ -74,7 +73,7 @@ found in the LICENSE file.
 
     document.addEventListener('DOMContentLoaded', function() {
       if (window.location.search.indexOf('fps') !== -1) {
-        monitor = SmoothnessDataCollector.getInstance();
+        monitor = new WebSmoothnessCollector();
         monitor.enabled = true;
         monitor.addEventListener('got-data', nonQuiesce);
         monitor.addEventListener('did-quiesce', didQuiesce);
