@@ -19,6 +19,7 @@
 
   var QUIESENCE_TIMEOUT_MS = 500;
 
+  var HISTORY_LENGTH_MS = 15000;
 
   /*
    * We need setImmediate in order to schedule a task right after the
@@ -204,13 +205,28 @@
     this.calculate_();
   }
   SmoothnessInfoForRange.prototype = {
-    addMoreInfo: function(info) {
+    addMoreInfo: function(info, opt_historyLengthMs, opt_now) {
       if (!(info instanceof SmoothnessInfoForRange))
         throw new Error('Must be info');
       Array.prototype.push.apply(this.rafEvents_, info.rafEvents_);
       Array.prototype.push.apply(this.commitEvents_, info.commitEvents_);
       Array.prototype.push.apply(this.compositeEvents_, info.compositeEvents_);
+
+      if (opt_historyLengthMs !== undefined)
+        this.purgeOldEvents_(opt_historyLengthMs, opt_now);
+
       this.calculate_();
+    },
+
+    purgeOldEvents_: function(historyLengthMs, opt_now) {
+      var now = opt_now || window.performance.now();
+      var retirementTimestamp = now - historyLengthMs;
+      function isStillCurrent(e) {
+        return e.startTime + e.duration >= retirementTimestamp;
+      }
+      this.rafEvents_ = this.rafEvents_.filter(isStillCurrent);
+      this.commitEvents_ = this.commitEvents_.filter(isStillCurrent);
+      this.compositeEvents_ = this.compositeEvents_.filter(isStillCurrent);
     },
 
     getBounds_: function() {
@@ -680,10 +696,11 @@
    * when one team member is working on a drawer system, while another team
    * member is working on the scrolling system.
    */
-  function SmoothnessMonitor(opt_monitor, opt_dataCallback) {
+  function SmoothnessMonitor(opt_monitor, opt_dataCallback, opt_historyLengthMs) {
     /* register with monitor for events */
     this.monitor_ = opt_monitor || SmoothnessDataCollector.getInstance();
     this.dataCallback_ = opt_dataCallback;
+    this.historyLengthMs_ = opt_historyLengthMs || HISTORY_LENGTH_MS;
 
     this.dataHandler_ = this.dataHandler_.bind(this);
     this.quiesceHandler_ = this.quiesceHandler_.bind(this);
@@ -712,7 +729,7 @@
     dataHandler_: function() {
       var stats = this.monitor_.overallSmoothnessInfo;
       if (stats)
-        this.currentSmoothnessInfo_.addMoreInfo(stats);
+        this.currentSmoothnessInfo_.addMoreInfo(stats, this.historyLengthMs_);
     },
 
     quiesceHandler_: function() {
@@ -752,6 +769,119 @@
   window.web_smoothness.SmoothnessDataCollector = SmoothnessDataCollector;
   window.web_smoothness.SmoothnessMonitor = SmoothnessMonitor;
   window.web_smoothness.SmoothnessInfoForRange = SmoothnessInfoForRange;
+})();
+// Copyright (c) 2014 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+'use strict';
+
+
+(function() {
+  if (window.web_smoothness && window.web_smoothness.Monitor)
+    return;
+  if (!window.web_smoothness)
+    window.web_smoothness = {};
+
+  /*
+   * Does this environment support PerformanceSmoothnessTiming events?
+   * If not, fall back to using requestAnimationFrame to approximate.
+   */
+  function supportsSmoothnessEvents() {
+    return web_smoothness.SmoothnessDataCollector.getInstance().
+        supportsSmoothnessEvents;
+  }
+
+  /* Invoke 'cb' when a Smoothness event appears on the performance timeline,
+   * or requestAnimationFrame monitoring fills the buffer.
+   */
+  function requestGotDataNotification(cb) {
+    var cb_ = function() {
+      web_smoothness.SmoothnessDataCollector.getInstance().
+          removeEventListener('got-data', cb_);
+      web_smoothness.SmoothnessDataCollector.getInstance().enabled = false;
+      cb();
+    };
+    web_smoothness.SmoothnessDataCollector.getInstance().
+        addEventListener('got-data', cb_);
+    web_smoothness.SmoothnessDataCollector.getInstance().enabled = true;
+  }
+
+  /* Returns promise that, when resolved, will tell time of the draw of the
+   * first frame, as measured by requestAnimationFrame or smoothness if
+   * present.
+   * E.g.:
+   *   element.addEventListener('click', function() {
+   *     web_smoothness.requestFirstFramePromise().then(function(elapsedTime) {
+   *       console.log("TTFF: ", elapsedTime);
+   *     })
+   *   });
+   *
+   * Note: this promise really can fail. When the page goes invisible,
+   * for instance.
+   */
+  function requestFirstFramePromise() {
+    return web_smoothness.SmoothnessDataCollector.getInstance().
+        requestFirstFramePromise();
+  }
+
+  /* Starts monitoring FPS for a specific range. Create one of these
+   * when you start an animation, then call endAndGetData when you're done.
+   * This lets you have per-animation monitoring of your application, useful
+   * when one team member is working on a drawer system, while another team
+   * member is working on the scrolling system.
+   */
+  function Monitor(opt_collector, opt_dataCallback) {
+    this.monitor_ = new web_smoothness.SmoothnessMonitor(opt_collector,
+                                                         opt_dataCallback);
+  }
+
+  Monitor.prototype = {
+
+    /*
+     * Set the data callback to be used when Monitor.end() is
+     * called.
+     */
+    set dataCallback(dataCallback) {
+      this.monitor_.dataCallback = dataCallback;
+    },
+
+    /*
+     * Returns the current smoothness information up to this point
+     */
+    get smoothnessInfo() {
+      return this.monitor_.smoothnessInfo;
+    },
+
+    /*
+     * Stop monitoring and if Monitor was created with an
+     * opt_dataCallback, or one was set via a call to set dataCallback,
+     * invoke that callback with the collected data.
+     */
+    end: function() {
+      this.monitor_.end();
+    },
+
+    /*
+     * Stop monitoring. Do not call any callback with data.
+     */
+    abort: function() {
+      this.monitor_.abort();
+    },
+
+    /*
+     * Stop monitoring and invoke gotDataCallback with the collected data.
+     */
+    endAndGetData: function(gotDataCallback) {
+      this.monitor_.endAndGetData(gotDataCallback);
+    }
+  };
+
+  window.web_smoothness.Monitor = Monitor;
+  window.web_smoothness.__defineGetter__('supportsSmoothnessEvents',
+                                         supportsSmoothnessEvents);
+  window.web_smoothness.requestGotDataNotification = requestGotDataNotification;
+  window.web_smoothness.requestFirstFramePromise = requestFirstFramePromise;
 })();
 // Copyright (c) 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -826,12 +956,16 @@
 
     decorate: function() {
       this.classList.add('fps-meter-element');
+      this.updateContents_ = this.updateContents_.bind(this);
+      this.monitor_ = new web_smoothness.Monitor();
+      web_smoothness.requestGotDataNotification(this.updateContents_);
+/*
       this.smoothnessDataCollector_ = web_smoothness.SmoothnessDataCollector.
           getInstance();
       this.smoothnessDataCollector_.enabled = true;
       this.smoothnessDataCollector_.addEventListener(
           'got-data', this.updateContents_.bind(this));
-
+*/
       this.textBox_ = document.createElement('div');
       this.textBox_.className = 'text-box';
       this.textBox_.fpsLabel_ = document.createElement('span');
@@ -854,7 +988,7 @@
       this.chartData_ = [];
 
       this.setupGoogleChart_(this, this.chartOpts);
-      this.updateContents_();
+      //this.updateContents_();
     },
 
     updateChartOptions_: function() {
@@ -872,7 +1006,7 @@
                 1: {title: null, ticks: [0,100]}},
         hAxis: {title: null, ticks: []}
       };
-      if (this.smoothnessDataCollector_.supportsDrawEvents) {
+      if (web_smoothness.supportsSmoothnessEvents) {
         this.chartOptions_.series = {
           0: {targetAxisIndex: 0, color:'blue'},
           1: {targetAxisIndex: 1, color:'orange'}
@@ -905,7 +1039,8 @@
     },
 
     updateContents_: function() {
-      var stats = this.smoothnessDataCollector_.overallSmoothnessInfo;
+      web_smoothness.requestGotDataNotification(this.updateContents_);
+      var stats = this.monitor_.smoothnessInfo;
       if (!stats)
         return;
       var fps;
@@ -927,7 +1062,7 @@
       // TODO(nduca): Compute this from the actual stored frame data, instead of
       // once a second.
       var now = window.performance.now();
-      if (this.smoothnessDataCollector_.supportsSmoothnessEvents) {
+      if (web_smoothness.supportsSmoothnessEvents) {
         if (this.chartData_.length == 0)
           this.chartData_.push(['Date', 'FPS', 'CPSF']);
         stats.frameIntervalsForRange.forEach(function(e) {

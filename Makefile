@@ -2,7 +2,7 @@ all: build acl
 
 build:
 	util/catjs src/collector.js src/web_smoothness.js > bin/web_smoothness.js
-	util/catjs src/collector.js src/fps_meter_element.js > bin/fps_meter_element.js
+	util/catjs src/collector.js src/web_smoothness.js src/fps_meter_element.js > bin/fps_meter_element.js
 
 acl:
 	find . -name \*.html -exec chmod 664 {} \;

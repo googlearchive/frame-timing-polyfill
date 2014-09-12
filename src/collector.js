@@ -13,6 +13,7 @@
 
   var QUIESENCE_TIMEOUT_MS = 500;
 
+  var HISTORY_LENGTH_MS = 15000;
 
   /*
    * We need setImmediate in order to schedule a task right after the
@@ -198,13 +199,28 @@
     this.calculate_();
   }
   SmoothnessInfoForRange.prototype = {
-    addMoreInfo: function(info) {
+    addMoreInfo: function(info, opt_historyLengthMs, opt_now) {
       if (!(info instanceof SmoothnessInfoForRange))
         throw new Error('Must be info');
       Array.prototype.push.apply(this.rafEvents_, info.rafEvents_);
       Array.prototype.push.apply(this.commitEvents_, info.commitEvents_);
       Array.prototype.push.apply(this.compositeEvents_, info.compositeEvents_);
+
+      if (opt_historyLengthMs !== undefined)
+        this.purgeOldEvents_(opt_historyLengthMs, opt_now);
+
       this.calculate_();
+    },
+
+    purgeOldEvents_: function(historyLengthMs, opt_now) {
+      var now = opt_now || window.performance.now();
+      var retirementTimestamp = now - historyLengthMs;
+      function isStillCurrent(e) {
+        return e.startTime + e.duration >= retirementTimestamp;
+      }
+      this.rafEvents_ = this.rafEvents_.filter(isStillCurrent);
+      this.commitEvents_ = this.commitEvents_.filter(isStillCurrent);
+      this.compositeEvents_ = this.compositeEvents_.filter(isStillCurrent);
     },
 
     getBounds_: function() {
@@ -674,10 +690,11 @@
    * when one team member is working on a drawer system, while another team
    * member is working on the scrolling system.
    */
-  function SmoothnessMonitor(opt_monitor, opt_dataCallback) {
+  function SmoothnessMonitor(opt_monitor, opt_dataCallback, opt_historyLengthMs) {
     /* register with monitor for events */
     this.monitor_ = opt_monitor || SmoothnessDataCollector.getInstance();
     this.dataCallback_ = opt_dataCallback;
+    this.historyLengthMs_ = opt_historyLengthMs || HISTORY_LENGTH_MS;
 
     this.dataHandler_ = this.dataHandler_.bind(this);
     this.quiesceHandler_ = this.quiesceHandler_.bind(this);
@@ -706,7 +723,7 @@
     dataHandler_: function() {
       var stats = this.monitor_.overallSmoothnessInfo;
       if (stats)
-        this.currentSmoothnessInfo_.addMoreInfo(stats);
+        this.currentSmoothnessInfo_.addMoreInfo(stats, this.historyLengthMs_);
     },
 
     quiesceHandler_: function() {

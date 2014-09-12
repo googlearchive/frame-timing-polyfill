@@ -71,11 +71,9 @@
 
     decorate: function() {
       this.classList.add('fps-meter-element');
-      this.smoothnessDataCollector_ = web_smoothness.SmoothnessDataCollector.
-          getInstance();
-      this.smoothnessDataCollector_.enabled = true;
-      this.smoothnessDataCollector_.addEventListener(
-          'got-data', this.updateContents_.bind(this));
+      this.updateContents_ = this.updateContents_.bind(this);
+      this.monitor_ = new web_smoothness.Monitor();
+      web_smoothness.requestGotDataNotification(this.updateContents_);
 
       this.textBox_ = document.createElement('div');
       this.textBox_.className = 'text-box';
@@ -99,7 +97,6 @@
       this.chartData_ = [];
 
       this.setupGoogleChart_(this, this.chartOpts);
-      this.updateContents_();
     },
 
     updateChartOptions_: function() {
@@ -117,7 +114,7 @@
                 1: {title: null, ticks: [0,100]}},
         hAxis: {title: null, ticks: []}
       };
-      if (this.smoothnessDataCollector_.supportsDrawEvents) {
+      if (web_smoothness.supportsSmoothnessEvents) {
         this.chartOptions_.series = {
           0: {targetAxisIndex: 0, color:'blue'},
           1: {targetAxisIndex: 1, color:'orange'}
@@ -150,7 +147,8 @@
     },
 
     updateContents_: function() {
-      var stats = this.smoothnessDataCollector_.overallSmoothnessInfo;
+      web_smoothness.requestGotDataNotification(this.updateContents_);
+      var stats = this.monitor_.smoothnessInfo;
       if (!stats)
         return;
       var fps;
@@ -172,7 +170,7 @@
       // TODO(nduca): Compute this from the actual stored frame data, instead of
       // once a second.
       var now = window.performance.now();
-      if (this.smoothnessDataCollector_.supportsSmoothnessEvents) {
+      if (web_smoothness.supportsSmoothnessEvents) {
         if (this.chartData_.length == 0)
           this.chartData_.push(['Date', 'FPS', 'CPSF']);
         stats.frameIntervalsForRange.forEach(function(e) {
