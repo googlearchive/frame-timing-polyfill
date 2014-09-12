@@ -479,8 +479,8 @@
     handleEventTrigger_: function() {
       var didGetEvents = this.collectEvents_();
       if (didGetEvents) {
-        this.renewQuiescenceTimeout_();
         this.dispatchEvent('got-data');
+        this.renewQuiescenceTimeout_();
       }
       return didGetEvents;
     },
@@ -552,7 +552,6 @@
       var didGetEvents = this.handleEventTrigger_();
       if (didGetEvents)
         return;
-      console.log('did quiesce');
       this.dispatchEvent('did-quiesce');
       if (this.hasSmoothnessApi_) {
         // Wait for the next event
@@ -689,7 +688,6 @@
     this.endAndGetData = this.endAndGetData.bind(this);
 
     this.currentSmoothnessInfo_ = new SmoothnessInfoForRange();
-
     this.monitor_.addEventListener('got-data', this.dataHandler_);
     this.monitor_.addEventListener('did-quiesce', this.quiesceHandler_);
     this.monitor_.enabled = true;

@@ -45,12 +45,15 @@ found in the LICENSE file.
     function nonQuiesce() {
       if (!smoothnessMonitor && !ignoreMonitorPaint)
         smoothnessMonitor = new web_smoothness.Monitor(undefined, gotData);
+      else
+        web_smoothness.requestGotDataNotification(nonQuiesce);
       ignoreMonitorPaint = false;
     }
 
     function gotData(data) {
       if (!data || data.measuredTimeRange === -Infinity) {
         smoothnessMonitor = undefined;
+        web_smoothness.requestGotDataNotification(nonQuiesce);
         return;
       }
       ignoreMonitorPaint = true;
@@ -67,11 +70,12 @@ found in the LICENSE file.
         document.querySelector('#rafValue').innerText = raf.toFixed(2);
       }
       smoothnessMonitor = undefined;
+      web_smoothness.requestGotDataNotification(nonQuiesce);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
       if (window.location.search.indexOf('fps') !== -1) {
-        web_smoothness.requestGotDataNotifications(nonQuiesce);
+        web_smoothness.requestGotDataNotification(nonQuiesce);
         if(!web_smoothness.supportsSmoothnessEvents) {
           window.setInterval(function() {
             if(smoothnessMonitor)

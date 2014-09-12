@@ -479,8 +479,8 @@
     handleEventTrigger_: function() {
       var didGetEvents = this.collectEvents_();
       if (didGetEvents) {
-        this.renewQuiescenceTimeout_();
         this.dispatchEvent('got-data');
+        this.renewQuiescenceTimeout_();
       }
       return didGetEvents;
     },
@@ -552,7 +552,6 @@
       var didGetEvents = this.handleEventTrigger_();
       if (didGetEvents)
         return;
-      console.log('did quiesce');
       this.dispatchEvent('did-quiesce');
       if (this.hasSmoothnessApi_) {
         // Wait for the next event
@@ -689,7 +688,6 @@
     this.endAndGetData = this.endAndGetData.bind(this);
 
     this.currentSmoothnessInfo_ = new SmoothnessInfoForRange();
-
     this.monitor_.addEventListener('got-data', this.dataHandler_);
     this.monitor_.addEventListener('did-quiesce', this.quiesceHandler_);
     this.monitor_.enabled = true;
@@ -774,19 +772,19 @@
     return SmoothnessDataCollector.getInstance().supportsSmoothnessEvents;
   }
 
-  /* Subscribes 'cb' to notification when Smoothness events appear on the
-   * performance timeline, or requestAnimationFrame monitoring fills the buffer.
+  /* Invoke 'cb' when a Smoothness event appears on the performance timeline,
+   * or requestAnimationFrame monitoring fills the buffer.
    */
-  function requestGotDataNotifications(cb) {
-    SmoothnessDataCollector.getInstance().addEventListener('got-data', cb);
+  function requestGotDataNotification(cb) {
+    var cb_ = function() {
+      SmoothnessDataCollector.getInstance().removeEventListener('got-data',
+                                                                cb_);
+      SmoothnessDataCollector.getInstance().enabled = false;
+      cb();
+    };
+    SmoothnessDataCollector.getInstance().addEventListener('got-data', cb_);
     SmoothnessDataCollector.getInstance().enabled = true;
   }
-
-  function cancelGotDataNotifications(cb) {
-    SmoothnessDataCollector.getInstance().removeEventListener('got-data', cb);
-    SmoothnessDataCollector.getInstance().enabled = false;
-  }
-
 
   /* Returns promise that, when resolved, will tell time of the draw of the
    * first frame, as measured by requestAnimationFrame or smoothness if
@@ -811,14 +809,14 @@
    * when one team member is working on a drawer system, while another team
    * member is working on the scrolling system.
    */
-  function WebSmoothnessMonitor(opt_collector, opt_dataCallback) {
+  function Monitor(opt_collector, opt_dataCallback) {
     this.monitor_ = new SmoothnessMonitor(opt_collector, opt_dataCallback);
   }
 
-  WebSmoothnessMonitor.prototype = {
+  Monitor.prototype = {
 
     /*
-     * Set the data callback to be used when WebSmoothnessMonitor.end() is
+     * Set the data callback to be used when Monitor.end() is
      * called.
      */
     set dataCallback(dataCallback) {
@@ -833,7 +831,7 @@
     },
 
     /*
-     * Stop monitoring and if WebSmoothnessMonitor was created with an
+     * Stop monitoring and if Monitor was created with an
      * opt_dataCallback, or one was set via a call to set dataCallback,
      * invoke that callback with the collected data.
      */
@@ -856,10 +854,9 @@
     }
   };
 
-  window.web_smoothness.Monitor = WebSmoothnessMonitor;
+  window.web_smoothness.Monitor = Monitor;
   window.web_smoothness.__defineGetter__('supportsSmoothnessEvents',
                                          supportsSmoothnessEvents);
-  window.web_smoothness.requestGotDataNotifications = requestGotDataNotifications;
-  window.web_smoothness.cancelGotDataNotifications = cancelGotDataNotifications;
+  window.web_smoothness.requestGotDataNotification = requestGotDataNotification;
   window.web_smoothness.requestFirstFramePromise = requestFirstFramePromise;
 })();
