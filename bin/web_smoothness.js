@@ -12,8 +12,10 @@
 
 
 (function() {
-  if (window.SmoothnessDataCollector)
+  if (window.web_smoothness && window.web_smoothness.SmoothnessDataCollector)
     return;
+  if (!window.web_smoothness)
+    window.web_smoothness = {};
 
   var QUIESENCE_TIMEOUT_MS = 500;
 
@@ -746,10 +748,10 @@
     }
   };
 
-  window.RAFBasedDataCollector = RAFBasedDataCollector;
-  window.SmoothnessDataCollector = SmoothnessDataCollector;
-  window.SmoothnessMonitor = SmoothnessMonitor;
-  window.SmoothnessInfoForRange = SmoothnessInfoForRange;
+  window.web_smoothness.RAFBasedDataCollector = RAFBasedDataCollector;
+  window.web_smoothness.SmoothnessDataCollector = SmoothnessDataCollector;
+  window.web_smoothness.SmoothnessMonitor = SmoothnessMonitor;
+  window.web_smoothness.SmoothnessInfoForRange = SmoothnessInfoForRange;
 })();
 // Copyright (c) 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -769,7 +771,8 @@
    * If not, fall back to using requestAnimationFrame to approximate.
    */
   function supportsSmoothnessEvents() {
-    return SmoothnessDataCollector.getInstance().supportsSmoothnessEvents;
+    return web_smoothness.SmoothnessDataCollector.getInstance().
+        supportsSmoothnessEvents;
   }
 
   /* Invoke 'cb' when a Smoothness event appears on the performance timeline,
@@ -777,13 +780,14 @@
    */
   function requestGotDataNotification(cb) {
     var cb_ = function() {
-      SmoothnessDataCollector.getInstance().removeEventListener('got-data',
-                                                                cb_);
-      SmoothnessDataCollector.getInstance().enabled = false;
+      web_smoothness.SmoothnessDataCollector.getInstance().
+          removeEventListener('got-data', cb_);
+      web_smoothness.SmoothnessDataCollector.getInstance().enabled = false;
       cb();
     };
-    SmoothnessDataCollector.getInstance().addEventListener('got-data', cb_);
-    SmoothnessDataCollector.getInstance().enabled = true;
+    web_smoothness.SmoothnessDataCollector.getInstance().
+        addEventListener('got-data', cb_);
+    web_smoothness.SmoothnessDataCollector.getInstance().enabled = true;
   }
 
   /* Returns promise that, when resolved, will tell time of the draw of the
@@ -800,7 +804,8 @@
    * for instance.
    */
   function requestFirstFramePromise() {
-    return SmoothnessDataCollector.getInstance().requestFirstFramePromise();
+    return web_smoothness.SmoothnessDataCollector.getInstance().
+        requestFirstFramePromise();
   }
 
   /* Starts monitoring FPS for a specific range. Create one of these
@@ -810,7 +815,8 @@
    * member is working on the scrolling system.
    */
   function Monitor(opt_collector, opt_dataCallback) {
-    this.monitor_ = new SmoothnessMonitor(opt_collector, opt_dataCallback);
+    this.monitor_ = new web_smoothness.SmoothnessMonitor(opt_collector,
+                                                         opt_dataCallback);
   }
 
   Monitor.prototype = {

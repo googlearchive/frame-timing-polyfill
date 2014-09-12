@@ -5,7 +5,7 @@
 
 document.addEventListener('run-tests', function(runner) {
   runner.test('rbdc-basic', function() {
-    var monitor = new RAFBasedDataCollector(window);
+    var monitor = new web_smoothness.RAFBasedDataCollector(window);
     monitor.enabled = true;
 
     function cleanup() {
@@ -37,7 +37,7 @@ document.addEventListener('run-tests', function(runner) {
   });
 
   runner.test('fps-mon-basic', function() {
-    var monitor = new SmoothnessDataCollector();
+    var monitor = new web_smoothness.SmoothnessDataCollector();
     monitor.enabled = true;
 
     function cleanup() {
@@ -71,17 +71,17 @@ document.addEventListener('run-tests', function(runner) {
       try {
         var mw = new MockWindow(window, caps);
         var md = new MockDocument(document);
-        SmoothnessDataCollector.destroyInstance();
-        new SmoothnessDataCollector(mw, md);
+        web_smoothness.SmoothnessDataCollector.destroyInstance();
+        new web_smoothness.SmoothnessDataCollector(mw, md);
         cb(mw, md);
       } finally {
-        SmoothnessDataCollector.destroyInstance();
+        web_smoothness.SmoothnessDataCollector.destroyInstance();
       }
     });
   }
 
   testWithMockWorld('fully-mocked', {smoothnessTiming: true}, function(mw, md) {
-    var sdc = SmoothnessDataCollector.getInstance();
+    var sdc = web_smoothness.SmoothnessDataCollector.getInstance();
     /*
      * TODO(mpb, nduca): Make some tests here, filling out mock_window as
      * needed.
@@ -101,7 +101,7 @@ document.addEventListener('run-tests', function(runner) {
   }
 
   runner.test('SmoothnessInfoForRangeDefaultValues', function() {
-    var sifr = new SmoothnessInfoForRange();
+    var sifr = new web_smoothness.SmoothnessInfoForRange();
     assertEquals(sifr.measuredTimeRange, -Infinity);
     assertEquals(sifr.frameIntervalMs, undefined);
     assertEquals(sifr.rafIntervalMs, undefined);
@@ -124,7 +124,7 @@ document.addEventListener('run-tests', function(runner) {
       var frameIntervalMs = testCase[1];
       var rafEvents = testCase[2].map(toRafEvent);
       var frameIntervalsForRange = testCase[3].map(toInterval);
-      var sifr = new SmoothnessInfoForRange(rafEvents);
+      var sifr = new web_smoothness.SmoothnessInfoForRange(rafEvents);
       assertEquals(sifr.measuredTimeRange, measuredTimeRange);
       assertEquals(sifr.frameIntervalMs, frameIntervalMs);
       assertEquals(sifr.rafIntervalMs, frameIntervalMs);
@@ -152,7 +152,8 @@ document.addEventListener('run-tests', function(runner) {
       var commitEvents = testCase[4].map(toSmoothnessEvent);
       var compositeEvents = testCase[5].map(toSmoothnessEvent);
       var frameIntervalsForRange = testCase[6].map(toInterval);
-      var sifr = new SmoothnessInfoForRange([], commitEvents, compositeEvents);
+      var sifr = new web_smoothness.SmoothnessInfoForRange(
+          [], commitEvents, compositeEvents);
       assertEquals(sifr.measuredTimeRange, measuredTimeRange);
       assertEquals(sifr.frameIntervalMs, drawIntervalMs);
       assertEquals(sifr.rafIntervalMs, undefined);
@@ -180,12 +181,12 @@ document.addEventListener('run-tests', function(runner) {
       var rafEvents2 = testCase[5].map(toRafEvent);
       var frameIntervalsForRange2 = testCase[6].map(toInterval);
 
-      var sifr = new SmoothnessInfoForRange(rafEvents1);
+      var sifr = new web_smoothness.SmoothnessInfoForRange(rafEvents1);
       assertEquals(sifr.measuredTimeRange, measuredTimeRange1);
       assertEquals(sifr.frameIntervalMs, frameIntervalMs1);
       assertEquals(sifr.rafIntervalMs, frameIntervalMs1);
 
-      var sifr2 = new SmoothnessInfoForRange(rafEvents2);
+      var sifr2 = new web_smoothness.SmoothnessInfoForRange(rafEvents2);
       sifr.addMoreInfo(sifr2);
       assertEquals(sifr.measuredTimeRange, measuredTimeRange2);
       assertEquals(sifr.frameIntervalMs, frameIntervalMs2);
@@ -218,8 +219,8 @@ document.addEventListener('run-tests', function(runner) {
       var drawsPerCommit2 = testCase[9];
       var commitEvents2 = testCase[10].map(toSmoothnessEvent);
       var compositeEvents2 = testCase[11].map(toSmoothnessEvent);
-      var sifr = new SmoothnessInfoForRange([], commitEvents1,
-                                            compositeEvents1);
+      var sifr = new web_smoothness.SmoothnessInfoForRange(
+          [], commitEvents1, compositeEvents1);
       assertEquals(sifr.measuredTimeRange, measuredTimeRange1);
       assertEquals(sifr.frameIntervalMs, drawIntervalMs1);
       assertEquals(sifr.commitIntervalMs, commitIntervalMs1);
@@ -227,8 +228,8 @@ document.addEventListener('run-tests', function(runner) {
                    drawIntervalMs1 ? drawIntervalMs1 : undefined);
       assertEquals(sifr.drawsPerCommit, drawsPerCommit1);
 
-      var sifr2 = new SmoothnessInfoForRange([], commitEvents2,
-                                             compositeEvents2);
+      var sifr2 = new web_smoothness.SmoothnessInfoForRange(
+          [], commitEvents2, compositeEvents2);
       sifr.addMoreInfo(sifr2);
       assertEquals(sifr.measuredTimeRange, measuredTimeRange2);
       assertEquals(sifr.frameIntervalMs, drawIntervalMs2);

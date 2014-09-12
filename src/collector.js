@@ -6,8 +6,10 @@
 
 
 (function() {
-  if (window.SmoothnessDataCollector)
+  if (window.web_smoothness && window.web_smoothness.SmoothnessDataCollector)
     return;
+  if (!window.web_smoothness)
+    window.web_smoothness = {};
 
   var QUIESENCE_TIMEOUT_MS = 500;
 
@@ -740,8 +742,8 @@
     }
   };
 
-  window.RAFBasedDataCollector = RAFBasedDataCollector;
-  window.SmoothnessDataCollector = SmoothnessDataCollector;
-  window.SmoothnessMonitor = SmoothnessMonitor;
-  window.SmoothnessInfoForRange = SmoothnessInfoForRange;
+  window.web_smoothness.RAFBasedDataCollector = RAFBasedDataCollector;
+  window.web_smoothness.SmoothnessDataCollector = SmoothnessDataCollector;
+  window.web_smoothness.SmoothnessMonitor = SmoothnessMonitor;
+  window.web_smoothness.SmoothnessInfoForRange = SmoothnessInfoForRange;
 })();

@@ -12,8 +12,10 @@
 
 
 (function() {
-  if (window.SmoothnessDataCollector)
+  if (window.web_smoothness && window.web_smoothness.SmoothnessDataCollector)
     return;
+  if (!window.web_smoothness)
+    window.web_smoothness = {};
 
   var QUIESENCE_TIMEOUT_MS = 500;
 
@@ -746,10 +748,10 @@
     }
   };
 
-  window.RAFBasedDataCollector = RAFBasedDataCollector;
-  window.SmoothnessDataCollector = SmoothnessDataCollector;
-  window.SmoothnessMonitor = SmoothnessMonitor;
-  window.SmoothnessInfoForRange = SmoothnessInfoForRange;
+  window.web_smoothness.RAFBasedDataCollector = RAFBasedDataCollector;
+  window.web_smoothness.SmoothnessDataCollector = SmoothnessDataCollector;
+  window.web_smoothness.SmoothnessMonitor = SmoothnessMonitor;
+  window.web_smoothness.SmoothnessInfoForRange = SmoothnessInfoForRange;
 })();
 // Copyright (c) 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -759,8 +761,10 @@
 
 
 (function() {
-  if (window.FPSMeter)
+  if (window.web_smoothness && window.web_smoothness.FPSMeter)
     return;
+  if (!window.web_smoothness)
+    window.web_smoothness = {};
 
   function FPSMeter() {
     var iframe = document.createElement('iframe');
@@ -822,7 +826,8 @@
 
     decorate: function() {
       this.classList.add('fps-meter-element');
-      this.smoothnessDataCollector_ = SmoothnessDataCollector.getInstance();
+      this.smoothnessDataCollector_ = web_smoothness.SmoothnessDataCollector.
+          getInstance();
       this.smoothnessDataCollector_.enabled = true;
       this.smoothnessDataCollector_.addEventListener(
           'got-data', this.updateContents_.bind(this));
@@ -973,7 +978,5 @@
     }
   };
 
-  window.RAFBasedDataCollector = RAFBasedDataCollector;
-  window.SmoothnessDataCollector = SmoothnessDataCollector;
-  window.FPSMeter = FPSMeter;
+  window.web_smoothness.FPSMeter = FPSMeter;
 })();

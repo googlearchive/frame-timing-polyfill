@@ -16,7 +16,8 @@
    * If not, fall back to using requestAnimationFrame to approximate.
    */
   function supportsSmoothnessEvents() {
-    return SmoothnessDataCollector.getInstance().supportsSmoothnessEvents;
+    return web_smoothness.SmoothnessDataCollector.getInstance().
+        supportsSmoothnessEvents;
   }
 
   /* Invoke 'cb' when a Smoothness event appears on the performance timeline,
@@ -24,13 +25,14 @@
    */
   function requestGotDataNotification(cb) {
     var cb_ = function() {
-      SmoothnessDataCollector.getInstance().removeEventListener('got-data',
-                                                                cb_);
-      SmoothnessDataCollector.getInstance().enabled = false;
+      web_smoothness.SmoothnessDataCollector.getInstance().
+          removeEventListener('got-data', cb_);
+      web_smoothness.SmoothnessDataCollector.getInstance().enabled = false;
       cb();
     };
-    SmoothnessDataCollector.getInstance().addEventListener('got-data', cb_);
-    SmoothnessDataCollector.getInstance().enabled = true;
+    web_smoothness.SmoothnessDataCollector.getInstance().
+        addEventListener('got-data', cb_);
+    web_smoothness.SmoothnessDataCollector.getInstance().enabled = true;
   }
 
   /* Returns promise that, when resolved, will tell time of the draw of the
@@ -47,7 +49,8 @@
    * for instance.
    */
   function requestFirstFramePromise() {
-    return SmoothnessDataCollector.getInstance().requestFirstFramePromise();
+    return web_smoothness.SmoothnessDataCollector.getInstance().
+        requestFirstFramePromise();
   }
 
   /* Starts monitoring FPS for a specific range. Create one of these
@@ -57,7 +60,8 @@
    * member is working on the scrolling system.
    */
   function Monitor(opt_collector, opt_dataCallback) {
-    this.monitor_ = new SmoothnessMonitor(opt_collector, opt_dataCallback);
+    this.monitor_ = new web_smoothness.SmoothnessMonitor(opt_collector,
+                                                         opt_dataCallback);
   }
 
   Monitor.prototype = {

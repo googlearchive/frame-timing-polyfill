@@ -6,8 +6,10 @@
 
 
 (function() {
-  if (window.FPSMeter)
+  if (window.web_smoothness && window.web_smoothness.FPSMeter)
     return;
+  if (!window.web_smoothness)
+    window.web_smoothness = {};
 
   function FPSMeter() {
     var iframe = document.createElement('iframe');
@@ -69,7 +71,8 @@
 
     decorate: function() {
       this.classList.add('fps-meter-element');
-      this.smoothnessDataCollector_ = SmoothnessDataCollector.getInstance();
+      this.smoothnessDataCollector_ = web_smoothness.SmoothnessDataCollector.
+          getInstance();
       this.smoothnessDataCollector_.enabled = true;
       this.smoothnessDataCollector_.addEventListener(
           'got-data', this.updateContents_.bind(this));
@@ -220,7 +223,5 @@
     }
   };
 
-  window.RAFBasedDataCollector = RAFBasedDataCollector;
-  window.SmoothnessDataCollector = SmoothnessDataCollector;
-  window.FPSMeter = FPSMeter;
+  window.web_smoothness.FPSMeter = FPSMeter;
 })();
