@@ -690,84 +690,8 @@
     }
   };
 
-  /* Starts monitoring FPS for a specific range. Create one of these
-   * when you start an animation, then call endAndGetData when you're done.
-   * This lets you have per-animation monitoring of your application, useful
-   * when one team member is working on a drawer system, while another team
-   * member is working on the scrolling system.
-   */
-  function SmoothnessMonitor(opt_monitor, opt_dataCallback, opt_historyLengthMs) {
-    /* register with monitor for events */
-    this.monitor_ = opt_monitor || SmoothnessDataCollector.getInstance();
-    this.dataCallback_ = opt_dataCallback;
-    this.historyLengthMs_ = opt_historyLengthMs || HISTORY_LENGTH_MS;
-
-    this.dataHandler_ = this.dataHandler_.bind(this);
-    this.quiesceHandler_ = this.quiesceHandler_.bind(this);
-    this.endAndGetData = this.endAndGetData.bind(this);
-
-    this.currentSmoothnessInfo_ = new SmoothnessInfoForRange();
-    this.monitor_.addEventListener('got-data', this.dataHandler_);
-    this.monitor_.addEventListener('did-quiesce', this.quiesceHandler_);
-    this.monitor_.enabled = true;
-  }
-  SmoothnessMonitor.prototype = {
-    set dataCallback(dataCallback) {
-      this.dataCallback_ = dataCallback;
-    },
-
-    /*
-     * Returns the current smoothness information up to this point
-     */
-    get smoothnessInfo() {
-      if (this.monitor_) {
-        this.monitor_.forceCollectEvents();
-      }
-      return this.currentSmoothnessInfo_;
-    },
-
-    dataHandler_: function() {
-      var stats = this.monitor_.overallSmoothnessInfo;
-      if (stats)
-        this.currentSmoothnessInfo_.addMoreInfo(stats, this.historyLengthMs_);
-    },
-
-    quiesceHandler_: function() {
-      this.end();
-    },
-
-    end: function() {
-      this.endAndGetData(this.dataCallback_);
-    },
-
-    abort: function() {
-      this.endAndGetData(function() {});
-    },
-
-    endAndGetData: function(gotDataCallback) {
-      if (!this.monitor_){
-        return;
-      }
-      /* wait until we see the current frame number make it up onscreen,
-       * handling case where maybe when we call end() another frame isn't
-       * necessarily coming.
-       *
-       * Then unregister with monitor, and create SmoothnessInfoForRange for
-       * the intervening time period, and pass to gotDataCallback.
-       */
-      if (gotDataCallback)
-        gotDataCallback(this.smoothnessInfo);
-
-      this.monitor_.enabled = false;
-      this.monitor_.removeEventListener('got-data', this.dataHandler_);
-      this.monitor_.removeEventListener('did-quiesce', this.quiesceHandler_);
-      this.monitor_ = undefined;
-    }
-  };
-
   window.web_smoothness.RAFBasedDataCollector = RAFBasedDataCollector;
   window.web_smoothness.SmoothnessDataCollector = SmoothnessDataCollector;
-  window.web_smoothness.SmoothnessMonitor = SmoothnessMonitor;
   window.web_smoothness.SmoothnessInfoForRange = SmoothnessInfoForRange;
 })();
 // Copyright (c) 2014 The Chromium Authors. All rights reserved.
@@ -782,6 +706,8 @@
     return;
   if (!window.web_smoothness)
     window.web_smoothness = {};
+
+   var HISTORY_LENGTH_MS = 15000;
 
   /*
    * Does this environment support PerformanceSmoothnessTiming events?
@@ -826,14 +752,25 @@
   }
 
   /* Starts monitoring FPS for a specific range. Create one of these
-   * when you start an animation, then call endAndGetData when you're done.
+   * when you start an animation, then call end() when you're done.
    * This lets you have per-animation monitoring of your application, useful
    * when one team member is working on a drawer system, while another team
    * member is working on the scrolling system.
    */
-  function Monitor(opt_collector, opt_dataCallback) {
-    this.monitor_ = new web_smoothness.SmoothnessMonitor(opt_collector,
-                                                         opt_dataCallback);
+  function Monitor(opt_collector, opt_dataCallback, opt_historyLengthMs) {
+    /* register with monitor for events */
+    this.collector_ = opt_collector || SmoothnessDataCollector.getInstance();
+    this.dataCallback_ = opt_dataCallback;
+    this.historyLengthMs_ = opt_historyLengthMs || HISTORY_LENGTH_MS;
+
+    this.dataHandler_ = this.dataHandler_.bind(this);
+    this.quiesceHandler_ = this.quiesceHandler_.bind(this);
+    this.endAndGetData_ = this.endAndGetData_.bind(this);
+
+    this.currentSmoothnessInfo_ = new web_smoothness.SmoothnessInfoForRange();
+    this.collector_.addEventListener('got-data', this.dataHandler_);
+    this.collector_.addEventListener('did-quiesce', this.quiesceHandler_);
+    this.collector_.enabled = true;
   }
 
   Monitor.prototype = {
@@ -843,14 +780,17 @@
      * called.
      */
     set dataCallback(dataCallback) {
-      this.monitor_.dataCallback = dataCallback;
+      this.dataCallback_ = dataCallback;
     },
 
     /*
      * Returns the current smoothness information up to this point
      */
     get smoothnessInfo() {
-      return this.monitor_.smoothnessInfo;
+      if (this.collector_) {
+        this.collector_.forceCollectEvents();
+      }
+      return this.currentSmoothnessInfo_;
     },
 
     /*
@@ -859,21 +799,47 @@
      * invoke that callback with the collected data.
      */
     end: function() {
-      this.monitor_.end();
+      this.endAndGetData_(this.dataCallback_);
     },
 
     /*
      * Stop monitoring. Do not call any callback with data.
      */
     abort: function() {
-      this.monitor_.abort();
+      this.endAndGetData_(function() {});
     },
 
     /*
      * Stop monitoring and invoke gotDataCallback with the collected data.
      */
-    endAndGetData: function(gotDataCallback) {
-      this.monitor_.endAndGetData(gotDataCallback);
+    endAndGetData_: function(gotDataCallback) {
+      if (!this.collector_){
+        return;
+      }
+      /* wait until we see the current frame number make it up onscreen,
+       * handling case where maybe when we call end() another frame isn't
+       * necessarily coming.
+       *
+       * Then unregister with collector, and create SmoothnessInfoForRange for
+       * the intervening time period, and pass to gotDataCallback.
+       */
+      if (gotDataCallback)
+        gotDataCallback(this.smoothnessInfo);
+
+      this.collector_.enabled = false;
+      this.collector_.removeEventListener('got-data', this.dataHandler_);
+      this.collector_.removeEventListener('did-quiesce', this.quiesceHandler_);
+      this.collector_ = undefined;
+    },
+
+    dataHandler_: function() {
+      var stats = this.collector_.overallSmoothnessInfo;
+      if (stats)
+        this.currentSmoothnessInfo_.addMoreInfo(stats, this.historyLengthMs_);
+    },
+
+    quiesceHandler_: function() {
+      this.end();
     }
   };
 
@@ -959,13 +925,7 @@
       this.updateContents_ = this.updateContents_.bind(this);
       this.monitor_ = new web_smoothness.Monitor();
       web_smoothness.requestGotDataNotification(this.updateContents_);
-/*
-      this.smoothnessDataCollector_ = web_smoothness.SmoothnessDataCollector.
-          getInstance();
-      this.smoothnessDataCollector_.enabled = true;
-      this.smoothnessDataCollector_.addEventListener(
-          'got-data', this.updateContents_.bind(this));
-*/
+
       this.textBox_ = document.createElement('div');
       this.textBox_.className = 'text-box';
       this.textBox_.fpsLabel_ = document.createElement('span');
@@ -988,7 +948,6 @@
       this.chartData_ = [];
 
       this.setupGoogleChart_(this, this.chartOpts);
-      //this.updateContents_();
     },
 
     updateChartOptions_: function() {
