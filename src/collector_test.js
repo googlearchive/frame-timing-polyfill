@@ -9,7 +9,7 @@ document.addEventListener('run-tests', function(runner) {
     monitor.enabled = true;
 
     function cleanup() {
-      monitor.enabled = false;
+      monitor.enabled = false();
     }
 
     var p = new Promise(function(resolve, reject) {
@@ -37,11 +37,11 @@ document.addEventListener('run-tests', function(runner) {
   });
 
   runner.test('fps-mon-basic', function() {
-    var monitor = new web_smoothness.SmoothnessDataCollector();
-    monitor.enabled = true;
+    var collector = new web_smoothness.SmoothnessDataCollector();
+    collector.incEnabledCount();
 
     function cleanup() {
-      monitor.enabled = false;
+      collector.decEnabledCount();
     }
 
     var p = new Promise(function(resolve, reject) {
@@ -55,9 +55,9 @@ document.addEventListener('run-tests', function(runner) {
       requestAnimationFrame(raf);
 
       // Wait for fps-changed
-      monitor.addEventListener('got-data', function() {
+      collector.addEventListener('got-data', function() {
         keepGoing = false;
-        var stats = monitor.overallSmoothnessInfo;
+        var stats = collector.overallSmoothnessInfo;
         assertTrue(stats.frameIntervalMs !== undefined);
         resolve();
       });

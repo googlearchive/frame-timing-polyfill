@@ -29,13 +29,14 @@
     var cb_ = function() {
       web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
           removeEventListener('got-data', cb_);
-      web_smoothness.SmoothnessDataCollector.getInstance(opt_win).enabled =
-          false;
+      web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
+          decEnabledCount();
       cb();
     };
     web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
         addEventListener('got-data', cb_);
-    web_smoothness.SmoothnessDataCollector.getInstance(opt_win).enabled = true;
+    web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
+        incEnabledCount();
   }
 
   /* Returns promise that, when resolved, will tell time of the draw of the
@@ -76,7 +77,7 @@
     this.currentSmoothnessInfo_ = new web_smoothness.SmoothnessInfoForRange();
     this.collector_.addEventListener('got-data', this.dataHandler_);
     this.collector_.addEventListener('did-quiesce', this.quiesceHandler_);
-    this.collector_.enabled = true;
+    this.collector_.incEnabledCount();
   }
 
   Monitor.prototype = {
@@ -132,7 +133,7 @@
       if (gotDataCallback)
         gotDataCallback(this.smoothnessInfo);
 
-      this.collector_.enabled = false;
+      this.collector_.decEnabledCount();
       this.collector_.removeEventListener('got-data', this.dataHandler_);
       this.collector_.removeEventListener('did-quiesce', this.quiesceHandler_);
       this.collector_ = undefined;

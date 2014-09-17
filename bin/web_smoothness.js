@@ -413,8 +413,8 @@
 
   SmoothnessDataCollector.prototype = {
     destroy: function(win) {
-      if (this.enabled_)
-        this.enabled = false;
+      while (this.enabled)
+        this.decEnabledCount();
       instance_[win] = undefined;
     },
 
@@ -422,44 +422,47 @@
       return this.enabled_ > 0;
     },
 
-    set enabled(enabled) {
-      if (!enabled && this.enabled_ == 0)
-        throw new Error('Error disabling monitor: not enabled');
-
-      this.enabled_ += (enabled ? 1 : -1);
-      if ((enabled && this.enabled_ != 1) || (!enabled && this.enabled_ != 0))
+    incEnabledCount: function() {
+      ++this.enabled_;
+      if (this.enabled_ != 1)
         return;
 
-      if (enabled) {
-        this.rafCommitEvents_ = [];
-        this.compositorCommitEvents_ = [];
-        this.compositorDrawEvents_ = [];
+      this.rafCommitEvents_ = [];
+      this.compositorCommitEvents_ = [];
+      this.compositorDrawEvents_ = [];
 
-        if (!this.hasSmoothnessApi_) {
-          this.rafCommitMonitor_.enabled = true;
-        } else {
-          this.window_.performance.addEventListener(
-            'webkitsmoothnesstimingbufferfull', this.onSmoothnessBufferFull_);
-          this.window_.performance.webkitSetSmoothnessTimingBufferSize(1);
-        }
-        this.document_.addEventListener('visibilitychange',
-                                        this.pageVisibilityChanged_);
+      if (!this.hasSmoothnessApi_) {
+        this.rafCommitMonitor_.enabled = true;
       } else {
-
-        this.document_.removeEventListener('visibilitychange',
-                                           this.pageVisibilityChanged_);
-
-        if (!this.hasSmoothnessApi_) {
-          this.rafCommitMonitor_.enabled = false;
-        } else {
-          this.window_.performance.removeEventListener(
+        this.window_.performance.addEventListener(
             'webkitsmoothnesstimingbufferfull', this.onSmoothnessBufferFull_);
-        }
+        this.window_.performance.webkitSetSmoothnessTimingBufferSize(1);
+      }
+      this.document_.addEventListener('visibilitychange',
+                                      this.pageVisibilityChanged_);
+    },
 
-        if (this.currentQuiesenceTimeout_) {
-          this.window_.clearTimeout(this.currentQuiesenceTimeout_);
-          this.currentQuiesenceTimeout_ = undefined;
-        }
+    decEnabledCount: function() {
+      if (this.enabled_ == 0)
+        throw new Error('Error disabling monitor: not enabled');
+
+      --this.enabled_;
+      if (this.enabled_ != 0)
+        return;
+
+      this.document_.removeEventListener('visibilitychange',
+                                         this.pageVisibilityChanged_);
+
+      if (!this.hasSmoothnessApi_) {
+        this.rafCommitMonitor_.enabled = false;
+      } else {
+        this.window_.performance.removeEventListener(
+            'webkitsmoothnesstimingbufferfull', this.onSmoothnessBufferFull_);
+      }
+
+      if (this.currentQuiesenceTimeout_) {
+        this.window_.clearTimeout(this.currentQuiesenceTimeout_);
+        this.currentQuiesenceTimeout_ = undefined;
       }
     },
 
@@ -661,16 +664,15 @@
 
     requestFirstFramePromiseUsingSmoothness_: function () {
       return new Promise(function(resolve, reject) {
-        var previousEnabledState = this.enabled;
         var targetCommitEvent;
         var startTime = this.window_.performance.now();
         var smoothnessCallback;
-        this.enabled = true;
+        this.incEnabledCount();
 
         var cancelSmoothnessPromise = function() {
           this.removeEventListener('cancel-promises', cancelSmoothnessPromise);
           this.removeEventListener('got-data', smoothnessCallback);
-          this.enabled = previousEnabledState;
+          this.decEnabledCount();
           reject(new Error("Page visibility changed"));
         }.bind(this);
         this.addEventListener('cancel-promises', cancelSmoothnessPromise);
@@ -693,7 +695,7 @@
               this.removeEventListener('cancel-promises',
                                        cancelSmoothnessPromise);
               this.removeEventListener('got-data', smoothnessCallback);
-              this.enabled = previousEnabledState;
+              this.decEnabledCount();
               resolve(this.compositorDrawEvents_[j].startTime - startTime);
             }
           }
@@ -740,13 +742,14 @@
     var cb_ = function() {
       web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
           removeEventListener('got-data', cb_);
-      web_smoothness.SmoothnessDataCollector.getInstance(opt_win).enabled =
-          false;
+      web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
+          decEnabledCount();
       cb();
     };
     web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
         addEventListener('got-data', cb_);
-    web_smoothness.SmoothnessDataCollector.getInstance(opt_win).enabled = true;
+    web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
+        incEnabledCount();
   }
 
   /* Returns promise that, when resolved, will tell time of the draw of the
@@ -787,7 +790,7 @@
     this.currentSmoothnessInfo_ = new web_smoothness.SmoothnessInfoForRange();
     this.collector_.addEventListener('got-data', this.dataHandler_);
     this.collector_.addEventListener('did-quiesce', this.quiesceHandler_);
-    this.collector_.enabled = true;
+    this.collector_.incEnabledCount();
   }
 
   Monitor.prototype = {
@@ -843,7 +846,7 @@
       if (gotDataCallback)
         gotDataCallback(this.smoothnessInfo);
 
-      this.collector_.enabled = false;
+      this.collector_.decEnabledCount();
       this.collector_.removeEventListener('got-data', this.dataHandler_);
       this.collector_.removeEventListener('did-quiesce', this.quiesceHandler_);
       this.collector_ = undefined;
