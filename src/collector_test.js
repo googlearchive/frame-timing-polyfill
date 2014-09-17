@@ -128,7 +128,7 @@ document.addEventListener('run-tests', function(runner) {
         rafIntervalMs:1, frameIntervalsForRange:[[3,2],[4,1]]}],
       [[[0,1],[0,2]],
        {startTime:0, endTime:2, measuredTimeRange:2, frameIntervalMs:1,
-        rafIntervalMs:1, frameIntervalsForRange:[]}],
+        rafIntervalMs:1, frameIntervalsForRange:[[0,0]]}],
       [[[1,2]],
        {startTime:1, endTime:3, measuredTimeRange:2, frameIntervalMs:2,
         rafIntervalMs:2, frameIntervalsForRange:[]}],
@@ -152,18 +152,15 @@ document.addEventListener('run-tests', function(runner) {
        {startTime:1, endTime:2, measuredTimeRange:1, frameIntervalMs:0.5,
         commitIntervalMs:0, drawIntervalMs:0.5,
         frameIntervalsForRange:[[2,1]]}],
-      [[[1,0],[2,1]], [],
-       {startTime:1, endTime:2, measuredTimeRange:1, frameIntervalMs:0,
-        commitIntervalMs:0.5, drawIntervalMs:0, drawsPerCommit:0,
-        frameIntervalsForRange:[]}],
-      [[[1,0],[2,1]], [[2,0],[3,0],[4,0]],
-       {startTime:1, endTime:4, measuredTimeRange:3, frameIntervalMs:1,
+      [[[1,0],[2,1]], [], {frameIntervalsForRange:[]}],
+      [[[1,0],[2,1]], [[2,0],[3,0],[5,0]],
+       {startTime:2, endTime:5, measuredTimeRange:3, frameIntervalMs:1,
         commitIntervalMs:1.5, drawIntervalMs:1, drawsPerCommit:1.5,
-        frameIntervalsForRange:[[3,1],[4,1]]}],
-      [[[1,0],[2,1],[3,2]], [[2,0],[3,0],[4,0],[8,1],[9,1],[10,1]],
-       {startTime:1, endTime:10, measuredTimeRange:9, frameIntervalMs:1.5,
+        frameIntervalsForRange:[[3,1],[5,2]]}],
+      [[[1,0],[2,1],[3,2]], [[2,0],[3,0],[4,0],[8,1],[9,1],[11,1]],
+       {startTime:2, endTime:11, measuredTimeRange:9, frameIntervalMs:1.5,
         commitIntervalMs:3, drawIntervalMs:1.5, drawsPerCommit:2,
-        frameIntervalsForRange:[[3,1],[4,1],[8,4],[9,1],[10,1]]}]
+        frameIntervalsForRange:[[3,1],[4,1],[8,4],[9,1],[11,2]]}]
     ],
     function(testCase) {
       var commitEvents = testCase[0].map(toSmoothnessEvent);
@@ -212,21 +209,21 @@ document.addEventListener('run-tests', function(runner) {
       [
         [], [],
         {frameIntervalsForRange: []},
-        [[1,0],[2,1],[3,2]], [[2,0],[3,0],[4,0],[8,1],[9,1],[10,1]],
-        {startTime:1, endTime:10, measuredTimeRange:9, frameIntervalMs:1.5,
+        [[1,0],[2,1],[3,2]], [[2,0],[3,0],[4,0],[8,1],[9,1],[11,1]],
+        {startTime:2, endTime:11, measuredTimeRange:9, frameIntervalMs:1.5,
          commitIntervalMs:3, drawIntervalMs:1.5, drawsPerCommit:2,
-         frameIntervalsForRange:[[3,1],[4,1],[8,4],[9,1],[10,1]]}
+         frameIntervalsForRange:[[3,1],[4,1],[8,4],[9,1],[11,2]]}
       ],
       [
-        [[1,0],[2,1],[3,2]], [[2,0],[3,0],[4,0],[8,1],[9,1],[10,1]],
-        {startTime:1, endTime:10, measuredTimeRange:9, frameIntervalMs:1.5,
+        [[1,0],[2,1],[3,2]], [[2,0],[3,0],[4,0],[8,1],[9,1],[11,1]],
+        {startTime:2, endTime:11, measuredTimeRange:9, frameIntervalMs:1.5,
          commitIntervalMs:3, drawIntervalMs:1.5, drawsPerCommit:2,
-         frameIntervalsForRange:[[3,1],[4,1],[8,4],[9,1],[10,1]]},
-        [[4,3]], [[12,3],[13,3],[14,3],[15,3]],
-        {startTime:1, endTime:15, measuredTimeRange:14, frameIntervalMs:1.4,
+         frameIntervalsForRange:[[3,1],[4,1],[8,4],[9,1],[11,2]]},
+        [[4,3]], [[12,3],[13,3],[14,3],[16,3]],
+        {startTime:2, endTime:16, measuredTimeRange:14, frameIntervalMs:1.4,
          commitIntervalMs:3.5, drawIntervalMs:1.4, drawsPerCommit:2.5,
-         frameIntervalsForRange:[[3,1],[4,1],[8,4],[9,1],[10,1],[12,2],[13,1],
-                                 [14,1],[15,1]]}
+         frameIntervalsForRange:[[3,1],[4,1],[8,4],[9,1],[11,2],[12,1],[13,1],
+                                 [14,1],[16,2]]}
       ]
     ],
     function(testCase) {
