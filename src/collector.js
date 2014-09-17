@@ -171,6 +171,8 @@
      * almost always get confused and think the change is bigger.
      */
     this.measuredTimeRange = undefined;
+    this.startTime = undefined;
+    this.endTime = undefined;
 
     // frameIntervalMs is commit rate without the smoothness api, but is
     // draw rate with it present.
@@ -202,6 +204,7 @@
     addMoreInfo: function(info, opt_historyLengthMs, opt_now) {
       if (!(info instanceof SmoothnessInfoForRange))
         throw new Error('Must be info');
+
       Array.prototype.push.apply(this.rafEvents_, info.rafEvents_);
       Array.prototype.push.apply(this.commitEvents_, info.commitEvents_);
       Array.prototype.push.apply(this.compositeEvents_, info.compositeEvents_);
@@ -231,16 +234,17 @@
         if (e.startTime < min) min = e.startTime;
         if (e.startTime + e.duration > max) max = e.startTime + e.duration;
       }
-      for (var i = 0; i < this.commitEvents_.length; i++) {
-        var e = this.commitEvents_[i];
-        if (e.startTime < min) min = e.startTime;
-        if (e.startTime + e.duration > max) max = e.startTime + e.duration;
-      }
-      for (var i = 0; i < this.compositeEvents_.length; i++) {
+       for (var i = 0; i < this.compositeEvents_.length; i++) {
         var e = this.compositeEvents_[i];
         if (e.startTime < min) min = e.startTime;
         if (e.startTime + e.duration > max) max = e.startTime + e.duration;
       }
+      if(min === Number.MAX_VALUE || max === -Number.MAX_VALUE)
+        return {
+          min: undefined,
+          max: undefined,
+          range: undefined
+        };
       return {
         min: min,
         max: max,
@@ -278,7 +282,10 @@
     calculate_: function() {
       var bounds = this.getBounds_();
       this.measuredTimeRange = bounds.range;
-      if (bounds.range === -Infinity) {
+      this.startTime = bounds.min;
+      this.endTime = bounds.max;
+
+      if (bounds.range === undefined) {
         return;
       }
       return this.rafEvents_.length ? this.calculateRaf_() :
@@ -341,7 +348,7 @@
 
   };
 
-  var instance_ = undefined;
+  var instance_ = [];
 
   /**
    * Infrastructure for monitoring smoothness related statistics, both
@@ -353,7 +360,7 @@
     this.window_ = opt_window || window;
     this.document_ = opt_document || document;
 
-    if (instance_)
+    if (instance_[this.window_])
       throw new Error('Get SmoothnessDataCollector via SmoothnessDataCollector.getInstance()');
 
     this.pageVisibilityChanged_ = this.onPageVisibilityChanged_.bind(this);
@@ -385,22 +392,24 @@
     this.compositorDrawEvents_ = [];
   }
 
-  SmoothnessDataCollector.getInstance = function() {
-    if (!instance_)
-      instance_ = new SmoothnessDataCollector();
-    return instance_;
+  SmoothnessDataCollector.getInstance = function(opt_window) {
+    var win = opt_window || window;
+    if (!instance_[win])
+      instance_[win] = new SmoothnessDataCollector(win);
+    return instance_[win];
   };
 
-  SmoothnessDataCollector.destroyInstance = function() {
-    if (instance_)
-      instance_.destroy();
+  SmoothnessDataCollector.destroyInstance = function(opt_window) {
+    var win = opt_window || window;
+    if (instance_[win])
+      instance_[win].destroy(win);
   };
 
   SmoothnessDataCollector.prototype = {
-    destroy: function() {
+    destroy: function(win) {
       if (this.enabled_)
         this.enabled = false;
-      instance_ = undefined;
+      instance_[win] = undefined;
     },
 
     get enabled() {
@@ -580,15 +589,12 @@
       var now = opt_now !== undefined ? opt_now : this.window_.performance.now();
       var retirementTimestamp = now - this.historyLengthMs_;
 
-      function isStillCurrent(e) {
+      function f(e) {
         return e.startTime + e.duration >= retirementTimestamp;
       }
-      this.rafCommitEvents_ = this.rafCommitEvents_.filter(
-          isStillCurrent);
-      this.compositorCommitEvents_ = this.compositorCommitEvents_.filter(
-          isStillCurrent);
-      this.compositorDrawEvents_ = this.compositorDrawEvents_.filter(
-          isStillCurrent);
+      this.rafCommitEvents_ = this.rafCommitEvents_.filter(f);
+      this.compositorCommitEvents_ = this.compositorCommitEvents_.filter(f);
+      this.compositorDrawEvents_ = this.compositorDrawEvents_.filter(f);
     },
 
     /**
@@ -598,6 +604,15 @@
       return new SmoothnessInfoForRange(this.rafCommitEvents_,
                                         this.compositorCommitEvents_,
                                         this.compositorDrawEvents_);
+    },
+
+    getOverallSmoothnessInfoSinceTime: function(startTime) {
+      function f(e) {
+        return e.startTime + e.duration > startTime;
+      }
+      return new SmoothnessInfoForRange(this.rafCommitEvents_.filter(f),
+                                        this.compositorCommitEvents_.filter(f),
+                                        this.compositorDrawEvents_.filter(f));
     },
 
     /* Returns promise that, when resolved, will tell time of the draw of the

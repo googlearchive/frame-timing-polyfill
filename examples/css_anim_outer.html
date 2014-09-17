@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2014 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<html>
+  <head>
+    <title>A (mostly) smooth page</title>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0,initial-scale=1.0, user-scalable=yes">
+
+    <!-- fps meter snippet -->
+    <script src="../bin/fps_meter_element.js"></script>
+    <link rel="stylesheet" href="../css/fps_meter_element.css">
+
+  </head>
+  <body style="margin:0px;padding:0px;overflow:hidden">
+    <div style="height:500px;" >
+      <iframe id="contents" frameBorder="0" position="absolute" style="overflow:hidden;height:100%;width:70%" src="css_anim_iframe.html"></iframe>
+      <script>
+        document.querySelector('#contents').contentWindow.name = "Mike";
+        document.body.appendChild(new web_smoothness.FPSMeter(document.querySelector('#contents').contentWindow));
+      </script>
+    </div>
+  </body>
+</html>

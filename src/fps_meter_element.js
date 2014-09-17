@@ -11,26 +11,26 @@
   if (!window.web_smoothness)
     window.web_smoothness = {};
 
-  function FPSMeter() {
+  function FPSMeter(opt_window) {
     var iframe = document.createElement('iframe');
     iframe.classList.add('fps-meter');
     iframe.__proto__ = FPSMeter.prototype;
     iframe.constuctor = FPSMeter;
     iframe.decorate();
     requestAnimationFrame(function(){
-      iframe.onAttach();
+      iframe.onAttach(opt_window);
     });
     return iframe;
   }
 
-  FPSMeter.initWhenReady = function() {
+  FPSMeter.initWhenReady = function(opt_window) {
     var search = window.location.search.substring(1);
     if (search.indexOf('fps') == -1)
       return;
     document.addEventListener('DOMContentLoaded', function() {
       if (document.body.querySelector('fps-meter'))
         return;
-      document.body.appendChild(new FPSMeter());
+      document.body.appendChild(new FPSMeter(opt_window));
     });
   }
 
@@ -41,14 +41,14 @@
       this.classList.add('fps-meter');
     },
 
-    onAttach: function() {
+    onAttach: function(win) {
       var linkEl = this.contentDocument.createElement('link');
       linkEl.setAttribute('rel', 'stylesheet');
-      linkEl.setAttribute('href', '../src/fps_meter_element.css');
+      linkEl.setAttribute('href', '../css/fps_meter_element.css');
       this.contentDocument.head.appendChild(linkEl);
 
       this.contentDocument.body.style.margin = '0px';
-      this.contentDocument.body.appendChild(new FPSMeterElement(this.contentWindow));
+      this.contentDocument.body.appendChild(new FPSMeterElement(win));
     }
   }
 
@@ -58,7 +58,7 @@
    */
   function FPSMeterElement(win) {
     var div = document.createElement('div');
-    div.iframe_win = win;
+    div.window_ = win;
     div.classList.add('fps-meter-element');
     div.__proto__ = FPSMeterElement.prototype;
     div.constuctor = FPSMeterElement;
@@ -72,8 +72,7 @@
     decorate: function() {
       this.classList.add('fps-meter-element');
       this.updateContents_ = this.updateContents_.bind(this);
-      this.monitor_ = new web_smoothness.Monitor();
-      web_smoothness.requestGotDataNotification(this.updateContents_);
+      this.restartMonitor_ = this.restartMonitor_.bind(this);
 
       this.textBox_ = document.createElement('div');
       this.textBox_.className = 'text-box';
@@ -95,8 +94,14 @@
       this.appendChild(this.chartBox_);
 
       this.chartData_ = [];
-
+      this.restartMonitor_();
+      web_smoothness.requestGotDataNotification(this.updateContents_, this.window_);
       this.setupGoogleChart_(this, this.chartOpts);
+    },
+
+    restartMonitor_: function() {
+      var collector = web_smoothness.SmoothnessDataCollector.getInstance(this.window_);
+      this.monitor_ = new web_smoothness.Monitor(collector, this.restartMonitor_);
     },
 
     updateChartOptions_: function() {
@@ -147,15 +152,19 @@
     },
 
     updateContents_: function() {
-      web_smoothness.requestGotDataNotification(this.updateContents_);
+      web_smoothness.requestGotDataNotification(this.updateContents_,
+                                                this.window_);
       var stats = this.monitor_.smoothnessInfo;
       if (!stats)
         return;
+
       var fps;
       if (stats.frameIntervalMs !== 0)
         fps = 1000 / stats.frameIntervalMs;
       else
         fps = 0;
+
+      this.chartData_ = [];
 
       this.textBox_.fpsLabel_.innerText = "FPS: " + fps.toFixed(2);
 
@@ -190,28 +199,11 @@
 
       this.chartData_.sort(function(a,b) { return a[0] - b[0]; });
 
-      // Google Charts API wasn't happy with trying to plot 900 points into
-      // a 200 pixel window for some reason. Lets try and collapse it down
-      // a little.
-      while (this.chartData_.length > 200) {
-        var newChartData = [["Date","FPS","CPSF"]];
-        for (var i = 1; i < (this.chartData_.length-1); i+=2) {
-          var elem = [];
-          for (var j = 0; j < 3; ++j) {
-            elem.push((this.chartData_[i][j] + this.chartData_[i+1][j])/2);
-          }
-          newChartData.push(elem);
-        }
-        if (this.chartData_.length % 1) {
-          newChartData.push(this.chartData_[this.chartData_.length-1]);
-        }
-        this.chartData_ = newChartData;
-      }
-
       // Limit moving graph window to 15 seconds
-      while ((this.chartData_[1][0] + 15000) < now)
+      while ((this.chartData_[1] && this.chartData_[1][0] + 15000) < now)
         this.chartData_.splice(1,1);
-
+      if(this.chartData_.length <= 1)
+        return;
 
       if (this.chart_) {
         this.updateChartOptions_();

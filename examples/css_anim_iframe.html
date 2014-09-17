@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2014 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0,initial-scale=1.0, user-scalable=yes">
+
+
+    <!-- actual page contents follow -->
+    <style>
+      demos {
+        display: flex;
+        flex-direction: row;
+        flex-flow: row wrap
+      }
+      #checkbox-area {
+        font-family: 'Open Sans', Arial, sans-serif;
+        font-size: 18pt;
+        color: #797979;
+      }
+      input {
+        font-size: 130%;
+      }
+      label {
+        -webkit-user-select: none;
+      }
+      #rotating-image {
+        -webkit-animation-duration: 10s;
+        -webkit-animation-timing-function: linear;
+        -webkit-animation-iteration-count: infinite;
+      }
+
+      @-webkit-keyframes rotate {
+        from {
+          -webkit-transform: rotate(0deg);
+        }
+        to {
+          -webkit-transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <demos>
+      <img id="rotating-image" src="images/soccerball.png" width="250px" height="250px">
+      <div id="checkbox-area">
+        <div style="width: 500px">
+          <label>
+            <input id="jank" type="checkbox" onclick="didJankStateChange()">Jank</input>
+          </label>
+        </div>
+        <div>
+          <label>
+            <input id="animate" type="checkbox" checked="true" onclick="startAnimation()">Animate</input>
+          </label>
+        </div>
+      </div>
+    </demos>
+    <div style="margin-top: 50px">
+      The goal of this page is to monitor smoothness of a continuously looping
+      <b>CSS</b> animation of the transform property.
+      </p>
+
+      The jank checkbox introduces random jank via javascript. On browsers that
+      execute CSS animations on another thread, the jank will affect the
+      responsiveness of javascript but the animation should appear visually
+      smooth. A good FPS monitoring API should be able to show this happening.
+      </p>
+
+      When animate is unchecked, the page goes idle. A good FPS monitoring API
+      should have zero CPU consumption. requestAnimationFrame polling loops,
+      unfortunately, will still spin the CPU. :(
+    </div>
+    <script>
+      function startAnimation() {
+        var el = document.querySelector("img");
+        var rotating = document.querySelector('#animate').checked
+        el.style.webkitAnimationName = rotating ? "rotate" : "";
+      };
+      startAnimation();
+
+      function sleep(ms) {
+        var start = Date.now();
+        while(Date.now() < start + ms);
+      }
+
+      maybeJankPending = false;
+      function didJankStateChange() {
+        if (maybeJankPending)
+          return;
+        setTimeout(maybeJank, 0);
+        maybeJankPending = true;
+      }
+      function maybeJank() {
+        maybeJankPending = false;
+        if (!document.querySelector('#jank').checked){
+          return;
+        }
+        console.time('jank');
+        sleep(4+Math.random() * 60);
+        console.timeEnd('jank');
+        setTimeout(maybeJank, Math.random(4));
+      };
+      didJankStateChange();
+    </script>
+  </body>
+</html>

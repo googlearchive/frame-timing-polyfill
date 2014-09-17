@@ -25,16 +25,17 @@
   /* Invoke 'cb' when a Smoothness event appears on the performance timeline,
    * or requestAnimationFrame monitoring fills the buffer.
    */
-  function requestGotDataNotification(cb) {
+  function requestGotDataNotification(cb, opt_win) {
     var cb_ = function() {
-      web_smoothness.SmoothnessDataCollector.getInstance().
+      web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
           removeEventListener('got-data', cb_);
-      web_smoothness.SmoothnessDataCollector.getInstance().enabled = false;
+      web_smoothness.SmoothnessDataCollector.getInstance(opt_win).enabled =
+          false;
       cb();
     };
-    web_smoothness.SmoothnessDataCollector.getInstance().
+    web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
         addEventListener('got-data', cb_);
-    web_smoothness.SmoothnessDataCollector.getInstance().enabled = true;
+    web_smoothness.SmoothnessDataCollector.getInstance(opt_win).enabled = true;
   }
 
   /* Returns promise that, when resolved, will tell time of the draw of the
@@ -50,8 +51,8 @@
    * Note: this promise really can fail. When the page goes invisible,
    * for instance.
    */
-  function requestFirstFramePromise() {
-    return web_smoothness.SmoothnessDataCollector.getInstance().
+  function requestFirstFramePromise(opt_win) {
+    return web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
         requestFirstFramePromise();
   }
 
@@ -63,7 +64,8 @@
    */
   function Monitor(opt_collector, opt_dataCallback, opt_historyLengthMs) {
     /* register with monitor for events */
-    this.collector_ = opt_collector || SmoothnessDataCollector.getInstance();
+    this.collector_ = opt_collector ||
+        web_smoothness.SmoothnessDataCollector.getInstance();
     this.dataCallback_ = opt_dataCallback;
     this.historyLengthMs_ = opt_historyLengthMs || HISTORY_LENGTH_MS;
 
@@ -137,7 +139,10 @@
     },
 
     dataHandler_: function() {
-      var stats = this.collector_.overallSmoothnessInfo;
+      var stats = this.currentSmoothnessInfo_.endTime ?
+           this.collector_.getOverallSmoothnessInfoSinceTime(
+               this.currentSmoothnessInfo_.endTime) :
+           this.collector_.overallSmoothnessInfo;
       if (stats)
         this.currentSmoothnessInfo_.addMoreInfo(stats, this.historyLengthMs_);
     },
