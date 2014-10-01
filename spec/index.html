@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Web FPS Timing</title>
+		<title>Web Smoothness Timing</title>
 		<style type="text/css">
 			pre.idl { border:solid thin; background:#eee; color:#000; padding:0.5em }
 			pre.idl :link, pre.idl :visited { color:inherit; background:transparent }
@@ -81,7 +81,7 @@
 			<h2 class="no-num no-toc" id="abstract">
 				Abstract</h2>
 			<p>
-				This specification defines an interface to help web developers measure the performance of their applications by giving them access to frame compositing data to facilitate Smoothness (i.e. Frames per Second and Time to Frame) measurements.</p>
+				This specification defines an interface to help web developers measure the performance of their applications by giving them access to frame performance data to facilitate Smoothness (i.e. Frames per Second and Time to Frame) measurements.</p>
 
 
 			<h2 class="no-num no-toc" id="status-of-this-document">
@@ -117,7 +117,7 @@
 						<li>
 							<a href="#extensions-performance-interface"><span class="secno">4.2</span> Extensions to the <code>Performance</code> Interface</a></li>
 						<li>
-							<a href="#performancemark"><span class="secno">4.3</span> The <code>PerformanceSmoothnessTiming</code>&nbsp;Interface</a></li>
+							<a href="#performancesmoothnesstiming"><span class="secno">4.3</span> The <code>PerformanceSmoothnessTiming</code>&nbsp;Interface</a></li>
 					</ol>
 				</li>
 				<li>
@@ -146,7 +146,7 @@
 					Slow page loading (such as extensive DOM manipulation), which may consume a lot of time on the rendering thread and allow the main thread to fire a requestAnimationFrame event even though the new content has not yet been displayed to the user.</li>
 			</ul>
 			<p>
-				This document defines the <a href="#performancemark"><code>PerformanceSmoothnessTiming</code></a>&nbsp;interface, and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface, which expose frame compositing and updating information to be used for smoothness measurements.</p>
+				This document defines the <a href="#performancesmoothnesstiming"><code>PerformanceSmoothnessTiming</code></a>&nbsp;interface, and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface, which expose frame performance data to be used for smoothness measurements.</p>
 
 
 			<h2 id="conformance-requirements">
@@ -182,7 +182,7 @@
 			<p>
 				This section is non-normative</p>
 			<p>
-				The <a href="#performancemark"><code>PerformanceSmoothnessTiming</code></a>&nbsp;interface and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface give web developers access to browser smoothness information so they can better measure the performance characteristics of their applications.</p>
+				The <a href="#performancesmoothnesstiming"><code>PerformanceSmoothnessTiming</code></a>&nbsp;interface and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface give web developers access to browser smoothness information so they can better measure the performance characteristics of their applications.</p>
 
 
 			<h3 id="extensions-performance-interface">
@@ -250,7 +250,8 @@
 				<span class="secno">4.3</span>&nbsp;The <code>PerformanceSmoothnessTiming</code>&nbsp;Interface</h3>
 			<pre class="idl">
   interface PerformanceSmoothnessTiming : <a href="http://www.w3.org/TR/performance-timeline/#performanceentry">PerformanceEntry</a> {
-    readonly attribute unsigned long sourceFrame;
+    readonly attribute unsigned long <a href="#dom-performancsmoothnesstiming-sourceframe-attribute">sourceFrame</a>;
+    readonly attribute double <a href="#dom-performancsmoothnesstiming-cputime-attribute">cpuTime</a>;
   };
     </pre>
 			<p>
@@ -272,6 +273,12 @@
 					<code><dfn id="dom-performancsmoothnesstiming-sourceframe">sourceFrame</dfn></code>&nbsp;attribute</h4>
 				<p>
 					This attribute must return the last known source frame for the event. This is used to correlate <code>commit</code> and <code>composite</code> events to measure time-to-frame delays.</p>
+			</div>
+			<div>
+				<h4 id="dom-performancsmoothnesstiming-cputime-attribute">
+					<code><dfn id="dom-performancsmoothnesstiming-cputime">cpuTime</dfn></code>&nbsp;attribute</h4>
+				<p>
+					This attribute must return the elapsed time used to process or calculate this event.</p>
 			</div>
 
 
