@@ -33,7 +33,7 @@
 			div.parameterDefinition { display:block; margin-left: 25px;}
 			div.methods { display:block; margin-top:30px; margin-left :25px;}
 		</style>
-		<link href="http://www.w3.org/StyleSheets/TR/W3C-ED.css" rel="stylesheet" type="text/css" />
+		<link href="//www.w3.org/StyleSheets/TR/W3C-ED.css" rel="stylesheet" type="text/css" />
 	</head>
 	<body class="draft">
 
@@ -89,11 +89,11 @@
 			<p>
 				<em>This section describes the status of this document at the time of its publication. Other documents may supersede this document. A list of current W3C publications and the latest revision of this technical report can be found in the <a href="http://www.w3.org/TR/">W3C technical reports index</a> at http://www.w3.org/TR/.</em></p>
 			<p>
-				This is a&nbsp;<strong>work in progress</strong>&nbsp;and may change without any notices.</p>
+				This is a <strong>work in progress</strong> and may change without any notices.</p>
 			<p>
-				Please send comments to&nbsp;<a href="mailto:public-web-perf@w3.org?subject=%5BPerformanceTimeline%5D%20">public-web-perf@w3.org</a>&nbsp;(<a href="http://lists.w3.org/Archives/Public/public-web-perf/">archived</a>) with&nbsp;<samp>[PerformanceTimeline]</samp>&nbsp;at the start of the subject line.</p>
+				Please send comments to <a href="mailto:public-web-perf@w3.org?subject=%5BPerformanceTimeline%5D%20">public-web-perf@w3.org</a> (<a href="http://lists.w3.org/Archives/Public/public-web-perf/">archived</a>) with <samp>[PerformanceTimeline]</samp> at the start of the subject line.</p>
 			<p>
-				This document is produced by the&nbsp;<a href="http://www.w3.org/2010/webperf/">Web Performance</a>&nbsp;Working Group. The Web Performance Working Group is part of the&nbsp;<a href="http://www.w3.org/2006/rwc/Activity">Rich Web Clients Activity</a>&nbsp;in the W3C<a href="http://www.w3.org/Interaction/">Interaction Domain</a>.</p>
+				This document is produced by the <a href="http://www.w3.org/2010/webperf/">Web Performance</a> Working Group. The Web Performance Working Group is part of the <a href="http://www.w3.org/2006/rwc/Activity">Rich Web Clients Activity</a> in the W3C<a href="http://www.w3.org/Interaction/">Interaction Domain</a>.</p>
 			<p>
 				Publication as a Working Draft does not imply endorsement by the W3C Membership. This is a draft document and may be updated, replaced or obsoleted by other documents at any time. It is inappropriate to cite this document as other than work in progress.</p>
 			<p>
@@ -117,7 +117,9 @@
 						<li>
 							<a href="#extensions-performance-interface"><span class="secno">4.2</span> Extensions to the <code>Performance</code> Interface</a></li>
 						<li>
-							<a href="#performancesmoothnesstiming"><span class="secno">4.3</span> The <code>PerformanceSmoothnessTiming</code>&nbsp;Interface</a></li>
+							<a href="#performancemainframetiming"><span class="secno">4.3</span> The <code>PerformanceMainFrameTiming</code> Interface</a></li>
+						<li>
+							<a href="#performancecompositetiming"><span class="secno">4.4</span> The <code>PerformanceCompositeTiming</code> Interface</a></li>
 					</ol>
 				</li>
 				<li>
@@ -146,7 +148,7 @@
 					Slow page loading (such as extensive DOM manipulation), which may consume a lot of time on the rendering thread and allow the main thread to fire a requestAnimationFrame event even though the new content has not yet been displayed to the user.</li>
 			</ul>
 			<p>
-				This document defines the <a href="#performancesmoothnesstiming"><code>PerformanceSmoothnessTiming</code></a>&nbsp;interface, and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface, which expose frame performance data to be used for smoothness measurements.</p>
+				This document defines the <a href="#performancemainframetiming"><code>PerformanceMainFrameTiming</code></a> interface, and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface, which expose frame performance data to be used for smoothness measurements.</p>
 
 
 			<h2 id="conformance-requirements">
@@ -182,7 +184,7 @@
 			<p>
 				This section is non-normative</p>
 			<p>
-				The <a href="#performancesmoothnesstiming"><code>PerformanceSmoothnessTiming</code></a>&nbsp;interface and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface give web developers access to browser smoothness information so they can better measure the performance characteristics of their applications.</p>
+				The <a href="#performancemainframetiming"><code>PerformanceMainFrameTiming</code></a> interface and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface give web developers access to browser smoothness information so they can better measure the performance characteristics of their applications.</p>
 
 
 			<h3 id="extensions-performance-interface">
@@ -199,7 +201,7 @@
 				<h4 id="dom-performance-clearsmoothnesstimings">
 					<code>clearSmoothnessTimings</code> method</h4>
 				<p>
-					The method <code>clearSmoothnessTimings</code> clears the buffer used to store the current list of <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> resources.</p>
+					The method <code>clearSmoothnessTimings</code> clears the buffer used to store the current list of <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> resources.</p>
 				<div class="parameters">
 					<p>
 						<b>No parameters</b></p>
@@ -213,9 +215,9 @@
 				<h4 id="dom-performance-setsmoothnesstimingbuffersize">
 					<code>setSmoothnessTimingBufferSize</code> method</h4>
 				<p>
-					The <code>setSmoothnessTimingBufferSize</code> method, when invoked, must set the maximum number of <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> resources that may be stored in the buffer to the value of the maxSize parameter.</p>
+					The <code>setSmoothnessTimingBufferSize</code> method, when invoked, must set the maximum number of <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> resources that may be stored in the buffer to the value of the maxSize parameter.</p>
 				<p>
-					If this method is not called, the user agent should store at least 150 <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> resources in the buffer, unless otherwise specified by the user agent.</p>
+					If this method is not called, the user agent should store at least 150 <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> resources in the buffer, unless otherwise specified by the user agent.</p>
 				<p>
 					if the maxSize parameter is less than the number of elements currently stored in the buffer, no elements in the buffer are to be removed. The maxSize parameter will apply only after the <a href="#dom-performance-clearsmoothnesstimings">clearSmoothnessTimings</a> method is called.</p>
 				<div class="parameters">
@@ -223,7 +225,7 @@
 						<b>Parameters</b></p>
 					in <code>maxSize</code> type of unsigned long
 					<p>
-						The maxSize parameter sets the maximum number of <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> resources that will be stored in the buffer.</p>
+						The maxSize parameter sets the maximum number of <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> resources that will be stored in the buffer.</p>
 					<p>
 						<b>No return value</b></p>
 					<p>
@@ -234,10 +236,10 @@
 				<h4 id="dom-performance-onsmoothnesstimingbufferfull">
 					<code>onsmoothnesstimingbufferfull</code> attribute</h4>
 				<p>
-					The callback onsmoothnesstimingbufferfull is triggered when the buffer used to store the list of <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> is full. The callback can be used to package existing <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> resources and clear the buffered <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> list. While executing the onsmoothnesstimingbufferfull callback, <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> will continue to be collected beyond the maximum limit of the resources allowed in the <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> interface until one of the following occurs:</p>
+					The callback onsmoothnesstimingbufferfull is triggered when the buffer used to store the list of <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> is full. The callback can be used to package existing <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> resources and clear the buffered <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> list. While executing the onsmoothnesstimingbufferfull callback, <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> will continue to be collected beyond the maximum limit of the resources allowed in the <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> interface until one of the following occurs:</p>
 				<ol>
 					<li>
-						<a href="#dom-performance-clearsmoothnesstimings"><code>clearSmoothnessTimings</code></a> is called - The <a href="http://www.w3.org/TR/performance-timeline/#performanceentrylist">PerformanceEntryList</a> will begin with the n+1th item if it exists and the first n elements are released, where n is the maximum number of resources allowed in the <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> interface. If the n+1th item does not exist, the buffer is cleared. The max length of the <a href="http://www.w3.org/TR/performance-timeline/#performanceentrylist">PerformanceEntryList</a> does not change unless otherwise specified by <a href="#dom-performance-setsmoothnesstimingbuffersize"><code>setSmoothnessTimingBufferSize</code></a>.</li>
+						<a href="#dom-performance-clearsmoothnesstimings"><code>clearSmoothnessTimings</code></a> is called - The <a href="http://www.w3.org/TR/performance-timeline/#performanceentrylist">PerformanceEntryList</a> will begin with the n+1th item if it exists and the first n elements are released, where n is the maximum number of resources allowed in the <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> interface. If the n+1th item does not exist, the buffer is cleared. The max length of the <a href="http://www.w3.org/TR/performance-timeline/#performanceentrylist">PerformanceEntryList</a> does not change unless otherwise specified by <a href="#dom-performance-setsmoothnesstimingbuffersize"><code>setSmoothnessTimingBufferSize</code></a>.</li>
 					<li>
 						<a href="#dom-performance-setsmoothnesstimingbuffersize"><code>setSmoothnessTimingBufferSize</code></a> is called - The <a href="http://www.w3.org/TR/performance-timeline/#performanceentrylist">PerformanceEntryList</a> will extend and / or truncate to the buffer size specified.</li>
 					<li>
@@ -246,39 +248,55 @@
 			</div>
 
 
-			<h3 id="performancesmoothnesstiming">
-				<span class="secno">4.3</span>&nbsp;The <code>PerformanceSmoothnessTiming</code>&nbsp;Interface</h3>
+			<h3 id="performancemainframetiming">
+				<span class="secno">4.3</span> The <code>PerformanceMainFrameTiming</code> Interface</h3>
 			<pre class="idl">
-  interface PerformanceSmoothnessTiming : <a href="http://www.w3.org/TR/performance-timeline/#performanceentry">PerformanceEntry</a> {
-    readonly attribute unsigned long <a href="#dom-performancsmoothnesstiming-sourceframe-attribute">sourceFrame</a>;
-    readonly attribute double <a href="#dom-performancsmoothnesstiming-cputime-attribute">cpuTime</a>;
+  interface PerformanceMainFrameTiming : <a href="http://www.w3.org/TR/performance-timeline/#performanceentry">PerformanceEntry</a> {
+    readonly attribute unsigned long <a href="#dom-performancemainframetiming-framenumber-attribute">frameNumber</a>;
   };
     </pre>
 			<p>
-				The <a href="#performancesmoothnesstiming">PerformanceSmoothnessTiming</a> interface participates in the&nbsp;<a href="http://www.w3.org/TR/performance-timeline/#sec-performance-timeline">Performance Timeline</a>&nbsp;and&nbsp;extends the following attributes of the <a href="http://www.w3.org/TR/performance-timeline/#performanceentry">PerformanceEntry</a> interface:</p>
+				The <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> interface participates in the <a href="http://www.w3.org/TR/performance-timeline/#sec-performance-timeline">Performance Timeline</a> and extends the following attributes of the <a href="http://www.w3.org/TR/performance-timeline/#performanceentry">PerformanceEntry</a> interface:</p>
 			<div class="parameters">
 				<p>
-					The <code>name</code> attribute will return the name of the smoothness event which occurred. This will be one of:
-<ol><li>The <a href="http://www.w3.org/TR/WebIDL/#idl-DOMString"><code>DOMString</code></a> <code>composite</code> for an event on the compositor thread.</li>
-<li>The <a href="http://www.w3.org/TR/WebIDL/#idl-DOMString"><code>DOMString</code></a>  <code>commit</code> for an event on the main thread pushing an update to the compositor thread</li></ol></p>
+					The <code>name</code> attribute will return the name of the requesting document.</p>
 				<p>
-					The <code>entryType</code> attribute will return the <a href="http://www.w3.org/TR/WebIDL/#idl-DOMString"><code>DOMString</code></a> <code>smoothness</code>.</p>
+					The <code>entryType</code> attribute will return the <a href="http://www.w3.org/TR/WebIDL/#idl-DOMString"><code>DOMString</code></a> <code>mainframe</code>.</p>
 				<p>
-					The <code>startTime</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a>&nbsp;giving when the event occurred.&nbsp;<a href="#HighResolutionTime">[High Resolution Time]</a>.</p>
+					The <code>startTime</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> with current frame's beggining time value <a href="#HighResolutionTime">[High Resolution Time]</a>.</p>
 				<p>
-					The <code>duration</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> of 0.</p>
+					The <code>duration</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> with the duration of the frame, computed by subtracting the <code>startTime</code> of the next frame from <code>startTime</code> of the current frame.</p>
 			</div>
 			<div>
-				<h4 id="dom-performancsmoothnesstiming-sourceframe-attribute">
-					<code><dfn id="dom-performancsmoothnesstiming-sourceframe">sourceFrame</dfn></code>&nbsp;attribute</h4>
+				<h4 id="dom-performancemainframetiming-framenumber-attribute">
+					<code><dfn id="dom-performancemainframetiming-framenumber">frameNumber</dfn></code> attribute</h4>
 				<p>
-					This attribute must return the last known source frame for the event. This is used to correlate <code>commit</code> and <code>composite</code> events to measure time-to-frame delays.</p>
+					The <code>frameNumber</code> attribute must return the source frame number for the event. This is used to correlate <code>PerformanceMainFrameTiming</code> and <code>PerformanceCompositeTiming</code> events to measure time-to-frame delays.</p>
+			</div>
+			<h3 id="performancecompositetiming">
+				<span class="secno">4.4</span> The <code>PerformanceCompositeTiming</code> Interface</h3>
+			<pre class="idl">
+  interface PerformanceCompositeTiming : <a href="http://www.w3.org/TR/performance-timeline/#performanceentry">PerformanceEntry</a> {
+    readonly attribute unsigned long <a href="#dom-performancecompositetiming-sourceframenumber-attribute">sourceFrameNumber</a>;
+  };
+    </pre>
+			<p>
+				The <a href="#performancecompositetiming">PerformanceCompositeTiming</a> interface participates in the <a href="http://www.w3.org/TR/performance-timeline/#sec-performance-timeline">Performance Timeline</a> and extends the following attributes of the <a href="http://www.w3.org/TR/performance-timeline/#performanceentry">PerformanceEntry</a> interface:</p>
+			<div class="parameters">
+				<p>
+					The <code>name</code> attribute will return the name of the requesting document.</p>
+				<p>
+					The <code>entryType</code> attribute will return the <a href="http://www.w3.org/TR/WebIDL/#idl-DOMString"><code>DOMString</code></a> <code>composite</code>.</p>
+				<p>
+					The <code>startTime</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> with event's time value <a href="#HighResolutionTime">[High Resolution Time]</a>.</p>
+				<p>
+					The <code>duration</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> of value 0.</p>
 			</div>
 			<div>
-				<h4 id="dom-performancsmoothnesstiming-cputime-attribute">
-					<code><dfn id="dom-performancsmoothnesstiming-cputime">cpuTime</dfn></code>&nbsp;attribute</h4>
+				<h4 id="dom-performancecompositetiming-sourceframenumber-attribute">
+					<code><dfn id="dom-performancecompositetiming-sourceframenumber">sourceFrameNumber</dfn></code> attribute</h4>
 				<p>
-					This attribute must return the elapsed time used to process or calculate this event.</p>
+					The <code>sourceFrameNumber</code> attribute must return the last known source frame number for the event. This is used to correlate <code>PerformanceMainFrameTiming</code> and <code>PerformanceCompositeTiming</code> events to measure time-to-frame delays.</p>
 			</div>
 
 
