@@ -259,19 +259,19 @@
 				The <a href="#performancemainframetiming">PerformanceMainFrameTiming</a> interface participates in the&nbsp;<a href="http://www.w3.org/TR/performance-timeline/#sec-performance-timeline">Performance Timeline</a>&nbsp;and&nbsp;extends the following attributes of the <a href="http://www.w3.org/TR/performance-timeline/#performanceentry">PerformanceEntry</a> interface:</p>
 			<div class="parameters">
 				<p>
-					The <code>name</code> attribute will return the name of the requesting document</p>
+					The <code>name</code> attribute will return the name of the requesting document.</p>
 				<p>
 					The <code>entryType</code> attribute will return the <a href="http://www.w3.org/TR/WebIDL/#idl-DOMString"><code>DOMString</code></a> <code>mainframe</code>.</p>
 				<p>
-					The <code>startTime</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a>&nbsp;giving when the frame began.&nbsp;<a href="#HighResolutionTime">[High Resolution Time]</a>.</p>
+					The <code>startTime</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> with current frame's beggining time value <a href="#HighResolutionTime">[High Resolution Time]</a>.</p>
 				<p>
-					The <code>duration</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> giving the duration of the frame (startTime of the next frame minus startTime of this frame.)</p>
+					The <code>duration</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> with the duration of the frame, computed by subtracting the <code>startTime</code> of the next frame from <code>startTime</code> of the current frame.</p>
 			</div>
 			<div>
 				<h4 id="dom-performancemainframetiming-framenumber-attribute">
 					<code><dfn id="dom-performancemainframetiming-framenumber">frameNumber</dfn></code>&nbsp;attribute</h4>
 				<p>
-					This attribute must return the source frame number for the event. This is used to correlate <code>PerformanceMainFrameTiming</code> and <code>PerformanceCompositeTiming</code> events to measure time-to-frame delays.</p>
+					The <code>frameNumber</code> attribute must return the source frame number for the event. This is used to correlate <code>PerformanceMainFrameTiming</code> and <code>PerformanceCompositeTiming</code> events to measure time-to-frame delays.</p>
 			</div>
 			<h3 id="performancecompositetiming">
 				<span class="secno">4.4</span>&nbsp;The <code>PerformanceCompositeTiming</code>&nbsp;Interface</h3>
@@ -288,15 +288,15 @@
 				<p>
 					The <code>entryType</code> attribute will return the <a href="http://www.w3.org/TR/WebIDL/#idl-DOMString"><code>DOMString</code></a> <code>composite</code>.</p>
 				<p>
-					The <code>startTime</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a>&nbsp;giving when the event occurred.&nbsp;<a href="#HighResolutionTime">[High Resolution Time]</a>.</p>
+					The <code>startTime</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> with event's time value <a href="#HighResolutionTime">[High Resolution Time]</a>.</p>
 				<p>
-					The <code>duration</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> of 0.</p>
+					The <code>duration</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> of value 0.</p>
 			</div>
 			<div>
 				<h4 id="dom-performancecompositetiming-sourceframenumber-attribute">
 					<code><dfn id="dom-performancecompositetiming-sourceframenumber">sourceFrameNumber</dfn></code>&nbsp;attribute</h4>
 				<p>
-					This attribute must return the last known source frame number for the event. This is used to correlate <code>PerformanceMainFrameTiming</code> and <code>PerformanceCompositeTiming</code> events to measure time-to-frame delays.</p>
+					The <code>sourceFrameNumber</code> attribute must return the last known source frame number for the event. This is used to correlate <code>PerformanceMainFrameTiming</code> and <code>PerformanceCompositeTiming</code> events to measure time-to-frame delays.</p>
 			</div>
 
 
