@@ -148,7 +148,7 @@
 					Slow page loading (such as extensive DOM manipulation), which may consume a lot of time on the rendering thread and allow the main thread to fire a requestAnimationFrame event even though the new content has not yet been displayed to the user.</li>
 			</ul>
 			<p>
-				This document defines the <a href="#performancemainframetiming"><code>PerformanceMainFrameTiming</code></a> interface, and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface, which expose frame performance data to be used for smoothness measurements.</p>
+				This document defines the <a href="#performancemainframetiming"><code>PerformanceMainFrameTiming</code></a> and <a href="#performancecompositetiming"><code>PerformanceCompositeTiming</code></a> interfaces, and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface, which expose frame performance data to be used for smoothness measurements.</p>
 
 
 			<h2 id="conformance-requirements">
@@ -184,7 +184,7 @@
 			<p>
 				This section is non-normative</p>
 			<p>
-				The <a href="#performancemainframetiming"><code>PerformanceMainFrameTiming</code></a> interface and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface give web developers access to browser smoothness information so they can better measure the performance characteristics of their applications.</p>
+				The <a href="#performancemainframetiming"><code>PerformanceMainFrameTiming</code></a> and <a href="#performancecompositetiming"><code>PerformanceCompositeTiming</code></a> interfaces and extensions to the <a href="#extensions-performance-interface"><code>Performance</code></a> interface give web developers access to browser smoothness information so they can better measure the performance characteristics of their applications.</p>
 
 
 			<h3 id="extensions-performance-interface">
@@ -252,7 +252,8 @@
 				<span class="secno">4.3</span> The <code>PerformanceMainFrameTiming</code> Interface</h3>
 			<pre class="idl">
   interface PerformanceMainFrameTiming : <a href="http://www.w3.org/TR/performance-timeline/#performanceentry">PerformanceEntry</a> {
-    readonly attribute unsigned long <a href="#dom-performancemainframetiming-framenumber-attribute">frameNumber</a>;
+    readonly attribute unsigned long <a href="#dom-performancemainframetiming-sourceframenumber-attribute">sourceFrameNumber</a>;
+    readonly attribute double <a href="#dom-performancemainframetiming-cputime-attribute">cpuTime</a>;
   };
     </pre>
 			<p>
@@ -268,10 +269,16 @@
 					The <code>duration</code> attribute will return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> with the duration of the frame, computed by subtracting the <code>startTime</code> of the next frame from <code>startTime</code> of the current frame.</p>
 			</div>
 			<div>
-				<h4 id="dom-performancemainframetiming-framenumber-attribute">
-					<code><dfn id="dom-performancemainframetiming-framenumber">frameNumber</dfn></code> attribute</h4>
+				<h4 id="dom-performancemainframetiming-sourceframenumber-attribute">
+					<code><dfn id="dom-performancemainframetiming-sourceframenumber">sourceFrameNumber</dfn></code> attribute</h4>
 				<p>
-					The <code>frameNumber</code> attribute must return the source frame number for the event. This is used to correlate <code>PerformanceMainFrameTiming</code> and <code>PerformanceCompositeTiming</code> events to measure time-to-frame delays.</p>
+					The <code>sourceFrameNumber</code> attribute must return the source frame number for the event. This is used to correlate <code>PerformanceMainFrameTiming</code> and <code>PerformanceCompositeTiming</code> events to measure time-to-frame delays.</p>
+			</div>
+			<div>
+				<h4 id="dom-performancemainframetiming-cputime-attribute">
+					<code><dfn id="dom-performancemainframetiming-cputime">cpuTime</dfn></code> attribute</h4>
+				<p>
+					The <code>cpuTime</code> attribute must return the CPU time used to process this frame.</p>
 			</div>
 			<h3 id="performancecompositetiming">
 				<span class="secno">4.4</span> The <code>PerformanceCompositeTiming</code> Interface</h3>
