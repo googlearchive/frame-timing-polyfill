@@ -272,13 +272,13 @@
 				<h4 id="dom-performancemainframetiming-sourceframenumber-attribute">
 					<code><dfn id="dom-performancemainframetiming-sourceframenumber">sourceFrameNumber</dfn></code> attribute</h4>
 				<p>
-					The <code>sourceFrameNumber</code> attribute must return the source frame number for the event. This is used to correlate <code>PerformanceMainFrameTiming</code> and <code>PerformanceCompositeTiming</code> events to measure time-to-frame delays.</p>
+					The <code>sourceFrameNumber</code> attribute must return the source frame number for the event. This is used to correlate <code>PerformanceMainFrameTiming</code> and <code>PerformanceCompositeTiming</code> events to measure time-to-frame delays. This may be null.</p>
 			</div>
 			<div>
 				<h4 id="dom-performancemainframetiming-cputime-attribute">
 					<code><dfn id="dom-performancemainframetiming-cputime">cpuTime</dfn></code> attribute</h4>
 				<p>
-					The <code>cpuTime</code> attribute must return the CPU time used to process this frame.</p>
+					The <code>cpuTime</code> attribute must return a <a href="http://www.w3.org/TR/hr-time/#domhighrestimestamp"><code>DOMHighResTimeStamp</code></a> giving the CPU time used to process this frame <a href="#HighResolutionTime">[High Resolution Time]</a>.</p>
 			</div>
 			<h3 id="performancecompositetiming">
 				<span class="secno">4.4</span> The <code>PerformanceCompositeTiming</code> Interface</h3>
