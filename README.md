@@ -8,5 +8,5 @@ The Smoothness API is the first step towards fixing our need to track frames per
 
 **Read more:**
 
-* [Explainer Doc](/Explainer)
+* [Explainer Doc](https://github.com/GoogleChrome/websmoothness/wiki/Explainer)
 * [Specification](https://rawgit.com/GoogleChrome/websmoothness/master/spec/index.html)
