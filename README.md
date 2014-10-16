@@ -6,7 +6,6 @@ Imagine you want to track scrolling performance of a listview, or you want to tr
 
 The Smoothness API is the first step towards fixing our need to track frames per second more reliably, comprehensively, and in a cross-browser way. It provides data on main thread CPU usage, commits by the main thread to the compositor, and draws made by the compositor to the screen, all of which allow you to build up a comprehensive and custom picture of how well your sites and apps run, both in your device lab, and out on real user devices.
 
-**Read more:**
+**Read more:** https://github.com/w3c/smoothness
 
-* [Explainer Doc](https://github.com/GoogleChrome/websmoothness/wiki/Explainer)
-* [Specification](https://rawgit.com/GoogleChrome/websmoothness/master/spec/index.html)
+
