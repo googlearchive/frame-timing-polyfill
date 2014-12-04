@@ -25,9 +25,9 @@ found in the LICENSE file.
       function appendButtonClick() {
 
         web_smoothness.requestFirstFramePromise().then(function(result) {
-          if (web_smoothness.supportsSmoothnessEvents) {
+          if (web_smoothness.supportsFrameTimingEvents) {
             var smoothness =  document.querySelector('#smoothnessTime');
-            smoothness.innerText = "Smoothness Time to first frame: " + result;
+            smoothness.innerText = "FrameTiming Time to first frame: " + result;
           } else {
             var raf = document.querySelector('#rafTime');
             raf.innerText = "RAF Time to first frame: " + result;

@@ -100,7 +100,7 @@
     },
 
     restartMonitor_: function() {
-      var collector = web_smoothness.SmoothnessDataCollector.getInstance(this.window_);
+      var collector = web_smoothness.FrameTimingDataCollector.getInstance(this.window_);
       this.monitor_ = new web_smoothness.Monitor(collector, this.restartMonitor_);
     },
 
@@ -119,7 +119,7 @@
                 1: {title: null, ticks: [0,100]}},
         hAxis: {title: null, ticks: []}
       };
-      if (web_smoothness.supportsSmoothnessEvents) {
+      if (web_smoothness.supportsFrameTimingEvents) {
         this.chartOptions_.series = {
           0: {targetAxisIndex: 0, color:'blue'},
           1: {targetAxisIndex: 1, color:'orange'}
@@ -154,7 +154,7 @@
     updateContents_: function() {
       web_smoothness.requestGotDataNotification(this.updateContents_,
                                                 this.window_);
-      var stats = this.monitor_.smoothnessInfo;
+      var stats = this.monitor_.frameTimingInfo;
       if (!stats)
         return;
 
@@ -179,7 +179,7 @@
       // TODO(nduca): Compute this from the actual stored frame data, instead of
       // once a second.
       var now = window.performance.now();
-      if (web_smoothness.supportsSmoothnessEvents) {
+      if (web_smoothness.supportsFrameTimingEvents) {
         if (this.chartData_.length == 0)
           this.chartData_.push(['Date', 'FPS', 'CPSF']);
         stats.frameIntervalsForRange.forEach(function(e) {

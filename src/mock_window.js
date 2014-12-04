@@ -4,7 +4,7 @@
 'use strict';
 
 (function() {
-  function MockPerformanceSmoothnessTiming() {
+  function MockPerformanceFrameTiming() {
   };
 
   function MockPerformance(mockWindow) {
@@ -18,8 +18,8 @@
     getEntriesByName: function(type, name) {
     },
 
-    webkitClearSmoothnessTimings: function() {
-      if (!this.mockWindow.windowCaps.smoothnessTiming)
+    webkitClearFrameTimings: function() {
+      if (!this.mockWindow.windowCaps.frameTiming)
         throw new Error('Not supported');
     }
   };
@@ -31,7 +31,7 @@
     this.windowCaps = caps;
     this.realWindow = window;
     this.performance = new MockPerformance(this);
-    this.PerformanceSmoothnessTiming = caps.smoothnessTiming ? MockPerformanceSmoothnessTiming : undefined;
+    this.PerformanceFrameTiming = caps.frameTiming ? MockPerformanceFrameTiming : undefined;
   }
 
   MockWindow.prototype = {

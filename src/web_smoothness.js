@@ -14,33 +14,33 @@
    var HISTORY_LENGTH_MS = 15000;
 
   /*
-   * Does this environment support PerformanceSmoothnessTiming events?
+   * Does this environment support PerformanceFrameTiming events?
    * If not, fall back to using requestAnimationFrame to approximate.
    */
-  function supportsSmoothnessEvents() {
-    return web_smoothness.SmoothnessDataCollector.getInstance().
-        supportsSmoothnessEvents;
+  function supportsFrameTimingEvents() {
+    return web_smoothness.FrameTimingDataCollector.getInstance().
+        supportsFrameTimingEvents;
   }
 
-  /* Invoke 'cb' when a Smoothness event appears on the performance timeline,
+  /* Invoke 'cb' when a FrameTiming event appears on the performance timeline,
    * or requestAnimationFrame monitoring fills the buffer.
    */
   function requestGotDataNotification(cb, opt_win) {
     var cb_ = function() {
-      web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
+      web_smoothness.FrameTimingDataCollector.getInstance(opt_win).
           removeEventListener('got-data', cb_);
-      web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
+      web_smoothness.FrameTimingDataCollector.getInstance(opt_win).
           decEnabledCount();
       cb();
     };
-    web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
+    web_smoothness.FrameTimingDataCollector.getInstance(opt_win).
         addEventListener('got-data', cb_);
-    web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
+    web_smoothness.FrameTimingDataCollector.getInstance(opt_win).
         incEnabledCount();
   }
 
   /* Returns promise that, when resolved, will tell time of the draw of the
-   * first frame, as measured by requestAnimationFrame or smoothness if
+   * first frame, as measured by requestAnimationFrame or frameTiming if
    * present.
    * E.g.:
    *   element.addEventListener('click', function() {
@@ -53,7 +53,7 @@
    * for instance.
    */
   function requestFirstFramePromise(opt_win) {
-    return web_smoothness.SmoothnessDataCollector.getInstance(opt_win).
+    return web_smoothness.FrameTimingDataCollector.getInstance(opt_win).
         requestFirstFramePromise();
   }
 
@@ -66,7 +66,7 @@
   function Monitor(opt_collector, opt_dataCallback, opt_historyLengthMs) {
     /* register with monitor for events */
     this.collector_ = opt_collector ||
-        web_smoothness.SmoothnessDataCollector.getInstance();
+        web_smoothness.FrameTimingDataCollector.getInstance();
     this.dataCallback_ = opt_dataCallback;
     this.historyLengthMs_ = opt_historyLengthMs || HISTORY_LENGTH_MS;
 
@@ -74,7 +74,7 @@
     this.quiesceHandler_ = this.quiesceHandler_.bind(this);
     this.endAndGetData_ = this.endAndGetData_.bind(this);
 
-    this.currentSmoothnessInfo_ = new web_smoothness.SmoothnessInfoForRange();
+    this.currentFrameTimingInfo_ = new web_smoothness.FrameTimingInfoForRange();
     this.collector_.addEventListener('got-data', this.dataHandler_);
     this.collector_.addEventListener('did-quiesce', this.quiesceHandler_);
     this.collector_.incEnabledCount();
@@ -91,13 +91,13 @@
     },
 
     /*
-     * Returns the current smoothness information up to this point
+     * Returns the current frameTiming information up to this point
      */
-    get smoothnessInfo() {
+    get frameTimingInfo() {
       if (this.collector_) {
         this.collector_.forceCollectEvents();
       }
-      return this.currentSmoothnessInfo_;
+      return this.currentFrameTimingInfo_;
     },
 
     /*
@@ -127,11 +127,11 @@
        * handling case where maybe when we call end() another frame isn't
        * necessarily coming.
        *
-       * Then unregister with collector, and create SmoothnessInfoForRange for
+       * Then unregister with collector, and create FrameTimingInfoForRange for
        * the intervening time period, and pass to gotDataCallback.
        */
       if (gotDataCallback)
-        gotDataCallback(this.smoothnessInfo);
+        gotDataCallback(this.frameTimingInfo);
 
       this.collector_.decEnabledCount();
       this.collector_.removeEventListener('got-data', this.dataHandler_);
@@ -140,12 +140,12 @@
     },
 
     dataHandler_: function() {
-      var stats = this.currentSmoothnessInfo_.endTime ?
-           this.collector_.getOverallSmoothnessInfoSinceTime(
-               this.currentSmoothnessInfo_.endTime) :
-           this.collector_.overallSmoothnessInfo;
+      var stats = this.currentFrameTimingInfo_.endTime ?
+           this.collector_.getOverallFrameTimingInfoSinceTime(
+               this.currentFrameTimingInfo_.endTime) :
+           this.collector_.overallFrameTimingInfo;
       if (stats)
-        this.currentSmoothnessInfo_.addMoreInfo(stats, this.historyLengthMs_);
+        this.currentFrameTimingInfo_.addMoreInfo(stats, this.historyLengthMs_);
     },
 
     quiesceHandler_: function() {
@@ -154,8 +154,8 @@
   };
 
   window.web_smoothness.Monitor = Monitor;
-  window.web_smoothness.__defineGetter__('supportsSmoothnessEvents',
-                                         supportsSmoothnessEvents);
+  window.web_smoothness.__defineGetter__('supportsFrameTimingEvents',
+                                         supportsFrameTimingEvents);
   window.web_smoothness.requestGotDataNotification = requestGotDataNotification;
   window.web_smoothness.requestFirstFramePromise = requestFirstFramePromise;
 })();

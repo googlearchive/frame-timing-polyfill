@@ -9,7 +9,7 @@ document.addEventListener('run-tests', function(runner) {
     monitor.enabled = true;
 
     function cleanup() {
-      monitor.enabled = false();
+      monitor.enabled = false;
     }
 
     var p = new Promise(function(resolve, reject) {
@@ -37,7 +37,7 @@ document.addEventListener('run-tests', function(runner) {
   });
 
   runner.test('fps-mon-basic', function() {
-    var collector = new web_smoothness.SmoothnessDataCollector();
+    var collector = new web_smoothness.FrameTimingDataCollector();
     collector.incEnabledCount();
 
     function cleanup() {
@@ -57,7 +57,8 @@ document.addEventListener('run-tests', function(runner) {
       // Wait for fps-changed
       collector.addEventListener('got-data', function() {
         keepGoing = false;
-        var stats = collector.overallSmoothnessInfo;
+        var stats = collector.overallFrameTimingInfo;
+        console.log(stats);
         assertTrue(stats.frameIntervalMs !== undefined);
         resolve();
       });
@@ -71,17 +72,17 @@ document.addEventListener('run-tests', function(runner) {
       try {
         var mw = new MockWindow(window, caps);
         var md = new MockDocument(document);
-        web_smoothness.SmoothnessDataCollector.destroyInstance();
-        new web_smoothness.SmoothnessDataCollector(mw, md);
+        web_smoothness.FrameTimingDataCollector.destroyInstance();
+        new web_smoothness.FrameTimingDataCollector(mw, md);
         cb(mw, md);
       } finally {
-        web_smoothness.SmoothnessDataCollector.destroyInstance();
+        web_smoothness.FrameTimingDataCollector.destroyInstance();
       }
     });
   }
 
-  testWithMockWorld('fully-mocked', {smoothnessTiming: true}, function(mw, md) {
-    var sdc = web_smoothness.SmoothnessDataCollector.getInstance();
+  testWithMockWorld('fully-mocked', {frameTiming: true}, function(mw, md) {
+    var sdc = web_smoothness.FrameTimingDataCollector.getInstance();
     /*
      * TODO(mpb, nduca): Make some tests here, filling out mock_window as
      * needed.
@@ -92,7 +93,7 @@ document.addEventListener('run-tests', function(runner) {
     return { startTime: e[0], duration: e[1] };
   }
 
-  function toSmoothnessEvent(e) {
+  function toFrameTimingEvent(e) {
     return { startTime: e[0], duration: 0, sourceFrame: e[1] };
   }
 
@@ -113,12 +114,12 @@ document.addEventListener('run-tests', function(runner) {
                  b.frameIntervalsForRange.map(toInterval));
   }
 
-  runner.test('SmoothnessInfoForRangeDefaultValues', function() {
-    var sifr = new web_smoothness.SmoothnessInfoForRange();
+  runner.test('FrameTimingInfoForRangeDefaultValues', function() {
+    var sifr = new web_smoothness.FrameTimingInfoForRange();
     assertSIFR(sifr, {frameIntervalsForRange: []});
   });
 
-  testRunner(runner, 'SmoothnessInfoForRangeWithRafEvents',
+  testRunner(runner, 'FrameTimingInfoForRangeWithRafEvents',
     [
       [[[1,2],[3,4]],
        {startTime:1, endTime:7, measuredTimeRange:6, frameIntervalMs:3,
@@ -139,11 +140,11 @@ document.addEventListener('run-tests', function(runner) {
     function(testCase) {
       var rafEvents = testCase[0].map(toRafEvent);
       var targetSIFR = testCase[1];
-      var sifr = new web_smoothness.SmoothnessInfoForRange(rafEvents);
+      var sifr = new web_smoothness.FrameTimingInfoForRange(rafEvents);
       assertSIFR(sifr, targetSIFR);
     });
 
-  testRunner(runner, 'SmoothnessInfoForRangeWithSmoothnessEvents',
+  testRunner(runner, 'FrameTimingInfoForRangeWithFrameTimingEvents',
     [
       [[], [[1,0]],
        {startTime:1, endTime:1, measuredTimeRange:0, frameIntervalMs:0,
@@ -163,15 +164,15 @@ document.addEventListener('run-tests', function(runner) {
         frameIntervalsForRange:[[3,1],[4,1],[8,4],[9,1],[11,2]]}]
     ],
     function(testCase) {
-      var commitEvents = testCase[0].map(toSmoothnessEvent);
-      var compositeEvents = testCase[1].map(toSmoothnessEvent);
+      var commitEvents = testCase[0].map(toFrameTimingEvent);
+      var compositeEvents = testCase[1].map(toFrameTimingEvent);
       var targetSIFR = testCase[2];
-      var sifr = new web_smoothness.SmoothnessInfoForRange(
+      var sifr = new web_smoothness.FrameTimingInfoForRange(
           [], commitEvents, compositeEvents);
       assertSIFR(sifr, targetSIFR);
     });
 
-  testRunner(runner, 'SmoothnessInfoForRange.addMoreInfoWithRaf',
+  testRunner(runner, 'FrameTimingInfoForRange.addMoreInfoWithRaf',
     [
       [
         [],
@@ -196,15 +197,15 @@ document.addEventListener('run-tests', function(runner) {
       var rafEvents2 = testCase[2].map(toRafEvent);
       var targetSIFR2 = testCase[3];
 
-      var sifr = new web_smoothness.SmoothnessInfoForRange(rafEvents1);
+      var sifr = new web_smoothness.FrameTimingInfoForRange(rafEvents1);
       assertSIFR(sifr, targetSIFR1);
 
-      var sifr2 = new web_smoothness.SmoothnessInfoForRange(rafEvents2);
+      var sifr2 = new web_smoothness.FrameTimingInfoForRange(rafEvents2);
       sifr.addMoreInfo(sifr2);
       assertSIFR(sifr, targetSIFR2);
     });
 
-  testRunner(runner, 'SmoothnessInfoForRange.addMoreInfoWithSmoothness',
+  testRunner(runner, 'FrameTimingInfoForRange.addMoreInfoWithFrameTiming',
     [
       [
         [], [],
@@ -227,18 +228,18 @@ document.addEventListener('run-tests', function(runner) {
       ]
     ],
     function(testCase) {
-      var commitEvents1 = testCase[0].map(toSmoothnessEvent);
-      var compositeEvents1 = testCase[1].map(toSmoothnessEvent);
+      var commitEvents1 = testCase[0].map(toFrameTimingEvent);
+      var compositeEvents1 = testCase[1].map(toFrameTimingEvent);
       var targetSIFR1 = testCase[2];
-      var commitEvents2 = testCase[3].map(toSmoothnessEvent);
-      var compositeEvents2 = testCase[4].map(toSmoothnessEvent);
+      var commitEvents2 = testCase[3].map(toFrameTimingEvent);
+      var compositeEvents2 = testCase[4].map(toFrameTimingEvent);
       var targetSIFR2 = testCase[5];
 
-      var sifr = new web_smoothness.SmoothnessInfoForRange(
+      var sifr = new web_smoothness.FrameTimingInfoForRange(
           [], commitEvents1, compositeEvents1);
       assertSIFR(sifr, targetSIFR1);
 
-      var sifr2 = new web_smoothness.SmoothnessInfoForRange(
+      var sifr2 = new web_smoothness.FrameTimingInfoForRange(
           [], commitEvents2, compositeEvents2);
       sifr.addMoreInfo(sifr2);
       assertSIFR(sifr, targetSIFR2);

@@ -6,7 +6,7 @@
 
 
 (function() {
-  if (window.web_smoothness && window.web_smoothness.SmoothnessDataCollector)
+  if (window.web_smoothness && window.web_smoothness.FrameTimingDataCollector)
     return;
   if (!window.web_smoothness)
     window.web_smoothness = {};
@@ -45,9 +45,9 @@
   /**
    * @constructor
    */
-  function CompositorCommitPerformanceEntry() {
+  function PerformanceRenderEntry() {
     this.name = 'requestAnimationFrame';
-    this.entryType = 'smoothness';
+    this.entryType = 'render';
     this.startTime = 0;
     this.duration = 0;
     this.sourceFrame = 0;
@@ -117,7 +117,7 @@
     measure_: function(sourceFrame, frameBeginTime) {
       var now = this.window_.performance.now();
       if (this.events_.length < this.maxBufferSize_) {
-        var e = new CompositorCommitPerformanceEntry();
+        var e = new PerformanceRenderEntry();
         e.sourceFrame = sourceFrame;
         e.startTime = frameBeginTime;
         e.duration = now - frameBeginTime;
@@ -158,7 +158,7 @@
     }
   };
 
-  function SmoothnessInfoForRange(
+  function FrameTimingInfoForRange(
       opt_rafEvents,
       opt_commitEvents, opt_compositeEvents) {
     /* Baic information: we report frame intervals instead of frame rate because
@@ -174,15 +174,15 @@
     this.startTime = undefined;
     this.endTime = undefined;
 
-    // frameIntervalMs is commit rate without the smoothness api, but is
+    // frameIntervalMs is commit rate without the frame timing api, but is
     // draw rate with it present.
     this.frameIntervalMs = undefined;
 
     // Details on main thread commit rate. Always available but noisy
-    // without smoothness api.
+    // without frame timing api.
     this.rafIntervalMs = undefined;
 
-    // Details on actual true screen fps. Undefined when smoothness api is not
+    // Details on actual true screen fps. Undefined when frame timing api is not
     // available.
     this.commitIntervalMs = undefined;
     this.drawIntervalMs = undefined;
@@ -200,9 +200,9 @@
 
     this.calculate_();
   }
-  SmoothnessInfoForRange.prototype = {
+  FrameTimingInfoForRange.prototype = {
     addMoreInfo: function(info, opt_historyLengthMs, opt_now) {
-      if (!(info instanceof SmoothnessInfoForRange))
+      if (!(info instanceof FrameTimingInfoForRange))
         throw new Error('Must be info');
 
       Array.prototype.push.apply(this.rafEvents_, info.rafEvents_);
@@ -289,7 +289,7 @@
         return;
       }
       return this.rafEvents_.length ? this.calculateRaf_() :
-          this.calculateSmoothness_();
+          this.calculateFrameTiming_();
     },
 
     findIntervals_: function(v, i, a) {
@@ -313,7 +313,7 @@
       this.frameIntervalMs = this.rafIntervalMs;
     },
 
-    calculateSmoothness_: function() {
+    calculateFrameTiming_: function() {
       // commitIntervalMs.
       if (this.commitEvents_.length) {
         this.commitIntervalMs = this.measuredTimeRange /
@@ -351,27 +351,27 @@
   var instance_ = [];
 
   /**
-   * Infrastructure for monitoring smoothness related statistics, both
+   * Infrastructure for monitoring frame timing related statistics, both
    * overall and for specific interactions.
    *
    * @constructor
    */
-  function SmoothnessDataCollector (opt_window, opt_document) {
+  function FrameTimingDataCollector (opt_window, opt_document) {
     this.window_ = opt_window || window;
     this.document_ = opt_document || document;
 
     if (instance_[this.window_])
-      throw new Error('Get SmoothnessDataCollector via SmoothnessDataCollector.getInstance()');
+      throw new Error('Get FrameTimingDataCollector via FrameTimingDataCollector.getInstance()');
 
     this.pageVisibilityChanged_ = this.onPageVisibilityChanged_.bind(this);
     this.onQuiesenceTimeout_ = this.onQuiesenceTimeout_.bind(this);
     this.onRafBufferFull_ = this.onRafBufferFull_.bind(this);
-    this.onSmoothnessBufferFull_ = this.onSmoothnessBufferFull_.bind(this);
+    this.onFrameTimingBufferFull_ = this.onFrameTimingBufferFull_.bind(this);
     this.handleEventTrigger_ = this.handleEventTrigger_.bind(this);
 
-    this.hasSmoothnessApi_ = this.window_.PerformanceSmoothnessTiming !== undefined;
+    this.hasFrameTimingApi_ = this.window_.PerformanceRenderTiming !== undefined;
 
-    if (!this.hasSmoothnessApi_) {
+    if (!this.hasFrameTimingApi_) {
       this.rafCommitMonitor_ = new RAFBasedDataCollector(this.window_);
       this.rafCommitMonitor_.addEventListener('full', this.onRafBufferFull_);
     } else {
@@ -392,20 +392,20 @@
     this.compositorDrawEvents_ = [];
   }
 
-  SmoothnessDataCollector.getInstance = function(opt_window) {
+  FrameTimingDataCollector.getInstance = function(opt_window) {
     var win = opt_window || window;
     if (!instance_[win])
-      instance_[win] = new SmoothnessDataCollector(win);
+      instance_[win] = new FrameTimingDataCollector(win);
     return instance_[win];
   };
 
-  SmoothnessDataCollector.destroyInstance = function(opt_window) {
+  FrameTimingDataCollector.destroyInstance = function(opt_window) {
     var win = opt_window || window;
     if (instance_[win])
       instance_[win].destroy(win);
   };
 
-  SmoothnessDataCollector.prototype = {
+  FrameTimingDataCollector.prototype = {
     destroy: function(win) {
       while (this.enabled)
         this.decEnabledCount();
@@ -425,12 +425,12 @@
       this.compositorCommitEvents_ = [];
       this.compositorDrawEvents_ = [];
 
-      if (!this.hasSmoothnessApi_) {
+      if (!this.hasFrameTimingApi_) {
         this.rafCommitMonitor_.enabled = true;
       } else {
         this.window_.performance.addEventListener(
-            'webkitsmoothnesstimingbufferfull', this.onSmoothnessBufferFull_);
-        this.window_.performance.webkitSetSmoothnessTimingBufferSize(1);
+            'webkitframetimingbufferfull', this.onFrameTimingBufferFull_);
+        this.window_.performance.webkitSetFrameTimingBufferSize(1);
       }
       this.document_.addEventListener('visibilitychange',
                                       this.pageVisibilityChanged_);
@@ -447,11 +447,11 @@
       this.document_.removeEventListener('visibilitychange',
                                          this.pageVisibilityChanged_);
 
-      if (!this.hasSmoothnessApi_) {
+      if (!this.hasFrameTimingApi_) {
         this.rafCommitMonitor_.enabled = false;
       } else {
         this.window_.performance.removeEventListener(
-            'webkitsmoothnesstimingbufferfull', this.onSmoothnessBufferFull_);
+            'webkitframetimingbufferfull', this.onFrameTimingBufferFull_);
       }
 
       if (this.currentQuiesenceTimeout_) {
@@ -460,8 +460,8 @@
       }
     },
 
-    get supportsSmoothnessEvents() {
-      return this.hasSmoothnessApi_;
+    get supportsFrameTimingEvents() {
+      return this.hasFrameTimingApi_;
     },
 
     addEventListener: function(name, cb) {
@@ -493,10 +493,10 @@
       this.handleEventTrigger_();
     },
 
-    onSmoothnessBufferFull_: function() {
+    onFrameTimingBufferFull_: function() {
       var didGetEvents = this.handleEventTrigger_();
       if (didGetEvents) {
-        this.window_.performance.webkitSetSmoothnessTimingBufferSize(150);
+        this.window_.performance.webkitSetFrameTimingBufferSize(150);
       }
     },
 
@@ -521,18 +521,16 @@
         didGetEvents = events.length > 0;
       }
 
-      if(this.hasSmoothnessApi_) {
-        var commitEvents = this.window_.performance.getEntriesByName(
-            "commit", "smoothness");
-        var drawEvents = this.window_.performance.getEntriesByName(
-            "composite", "smoothness");
+      if(this.hasFrameTimingApi_) {
+        var commitEvents = this.window_.performance.getEntriesByType("render");
+        var drawEvents = this.window_.performance.getEntriesByType("composite");
 
         this.compositorCommitEvents_.push.apply(
             this.compositorCommitEvents_, commitEvents);
         this.compositorDrawEvents_.push.apply(
             this.compositorDrawEvents_, drawEvents);
 
-        this.window_.performance.webkitClearSmoothnessTimings();
+        this.window_.performance.webkitClearFrameTimings();
 
         didGetEvents = didGetEvents || commitEvents.length > 0
             || drawEvents.length > 0;
@@ -545,7 +543,7 @@
     renewQuiescenceTimeout_: function() {
       // Quiesence based on timeouts isn't supported in raf mode. The issue is
       // we can't tell apart rAFs that do nothing from rAFs that do real work.
-      if (!this.hasSmoothnessApi_)
+      if (!this.hasFrameTimingApi_)
         return;
 
       if (this.currentQuiesenceTimeout_) {
@@ -577,10 +575,10 @@
       if (didGetEvents)
         return;
       this.dispatchEvent('did-quiesce');
-      if (this.hasSmoothnessApi_) {
+      if (this.hasFrameTimingApi_) {
         // Wait for the next event
-        this.window_.performance.webkitSetSmoothnessTimingBufferSize(1);
-        this.window_.performance.webkitClearSmoothnessTimings();
+        this.window_.performance.webkitSetFrameTimingBufferSize(1);
+        this.window_.performance.webkitClearFrameTimings();
       }
       /* TODO(nduca): It seems right that we clear the saved events, but
        * its not 100% clear to me that this is the case. */
@@ -601,25 +599,25 @@
     },
 
     /**
-     * Gets a SmoothnessInfoForRange for the currently recorded amount of time
+     * Gets a FrameTimingInfoForRange for the currently recorded amount of time
      */
-    get overallSmoothnessInfo() {
-      return new SmoothnessInfoForRange(this.rafCommitEvents_,
+    get overallFrameTimingInfo() {
+      return new FrameTimingInfoForRange(this.rafCommitEvents_,
                                         this.compositorCommitEvents_,
                                         this.compositorDrawEvents_);
     },
 
-    getOverallSmoothnessInfoSinceTime: function(startTime) {
+    getOverallFrameTimingInfoSinceTime: function(startTime) {
       function f(e) {
         return e.startTime + e.duration > startTime;
       }
-      return new SmoothnessInfoForRange(this.rafCommitEvents_.filter(f),
+      return new FrameTimingInfoForRange(this.rafCommitEvents_.filter(f),
                                         this.compositorCommitEvents_.filter(f),
                                         this.compositorDrawEvents_.filter(f));
     },
 
     /* Returns promise that, when resolved, will tell time of the draw of the
-     * first frame, as measured by requestAnimationFrame or smoothness if
+     * first frame, as measured by requestAnimationFrame or frame timing if
      * present.
      * E.g.:
      *   element.addEventListener('click', function() {
@@ -632,8 +630,8 @@
      * for instance.
      */
     requestFirstFramePromise: function() {
-      return this.hasSmoothnessApi_ ?
-          this.requestFirstFramePromiseUsingSmoothness_() :
+      return this.hasFrameTimingApi_ ?
+          this.requestFirstFramePromiseUsingFrameTiming_() :
           this.requestFirstFramePromiseUsingRAF_();
     },
 
@@ -656,22 +654,22 @@
       }.bind(this));
     },
 
-    requestFirstFramePromiseUsingSmoothness_: function () {
+    requestFirstFramePromiseUsingFrameTiming_: function () {
       return new Promise(function(resolve, reject) {
         var targetCommitEvent;
         var startTime = this.window_.performance.now();
-        var smoothnessCallback;
+        var frameTimingCallback;
         this.incEnabledCount();
 
-        var cancelSmoothnessPromise = function() {
-          this.removeEventListener('cancel-promises', cancelSmoothnessPromise);
-          this.removeEventListener('got-data', smoothnessCallback);
+        var cancelFrameTimingPromise = function() {
+          this.removeEventListener('cancel-promises', cancelFrameTimingPromise);
+          this.removeEventListener('got-data', frameTimingCallback);
           this.decEnabledCount();
           reject(new Error("Page visibility changed"));
         }.bind(this);
-        this.addEventListener('cancel-promises', cancelSmoothnessPromise);
+        this.addEventListener('cancel-promises', cancelFrameTimingPromise);
 
-        smoothnessCallback = function() {
+        frameTimingCallback = function() {
           if (!targetCommitEvent) {
             for(var i = 0; i < this.compositorCommitEvents_.length; ++i) {
               if (this.compositorCommitEvents_[i].startTime > startTime) {
@@ -687,21 +685,21 @@
           for (var j = 0; j < this.compositorDrawEvents_.length; ++j) {
             if (this.compositorDrawEvents_[j].sourceFrame >= targetFrame) {
               this.removeEventListener('cancel-promises',
-                                       cancelSmoothnessPromise);
-              this.removeEventListener('got-data', smoothnessCallback);
+                                       cancelFrameTimingPromise);
+              this.removeEventListener('got-data', frameTimingCallback);
               this.decEnabledCount();
               resolve(this.compositorDrawEvents_[j].startTime - startTime);
             }
           }
         }.bind(this);
 
-        this.addEventListener('got-data', smoothnessCallback);
+        this.addEventListener('got-data', frameTimingCallback);
         this.renewQuiescenceTimeout_();
       }.bind(this));
     }
   };
 
   window.web_smoothness.RAFBasedDataCollector = RAFBasedDataCollector;
-  window.web_smoothness.SmoothnessDataCollector = SmoothnessDataCollector;
-  window.web_smoothness.SmoothnessInfoForRange = SmoothnessInfoForRange;
+  window.web_smoothness.FrameTimingDataCollector = FrameTimingDataCollector;
+  window.web_smoothness.FrameTimingInfoForRange = FrameTimingInfoForRange;
 })();

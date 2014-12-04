@@ -51,14 +51,15 @@ found in the LICENSE file.
     }
 
     function gotData(data) {
-      if (!data || data.measuredTimeRange === -Infinity) {
+      if (!data || data.measuredTimeRange === undefined) {
         smoothnessMonitor = undefined;
         web_smoothness.requestGotDataNotification(nonQuiesce);
         return;
       }
       ignoreMonitorPaint = true;
+    console.log(data);
       document.querySelector('#durationValue').innerText = data.measuredTimeRange.toFixed(2);
-      if (web_smoothness.supportsSmoothnessEvents) {
+      if (web_smoothness.supportsFrameTimingEvents) {
         var cpsf = data.drawsPerCommit;
         var fps = data.drawIntervalMs;
         fps = fps ? 1000 / fps : 0;
@@ -76,7 +77,7 @@ found in the LICENSE file.
     document.addEventListener('DOMContentLoaded', function() {
       if (window.location.search.indexOf('fps') !== -1) {
         web_smoothness.requestGotDataNotification(nonQuiesce);
-        if(!web_smoothness.supportsSmoothnessEvents) {
+        if(!web_smoothness.supportsFrameTimingEvents) {
           window.setInterval(function() {
             if(smoothnessMonitor)
               smoothnessMonitor.end();
@@ -89,7 +90,7 @@ found in the LICENSE file.
          * - stop monitor get data
          * update div with computd fps for scroll
          */
-        if (web_smoothness.supportsSmoothnessEvents) {
+        if (web_smoothness.supportsFrameTimingEvents) {
           document.querySelector('#raf').style.display = 'none';
           document.querySelector('#fps').style.display = 'initial';
           document.querySelector('#cpsf').style.display = 'initial';
